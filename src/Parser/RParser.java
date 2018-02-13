@@ -138,12 +138,7 @@ public class RParser {
     }
 
     private void parseRelOp() {
-        if (sym == Token.eqlToken ||
-                sym == Token.neqToken ||
-                sym == Token.letToken ||
-                sym == Token.leqToken ||
-                sym == Token.geqToken ||
-                sym == Token.gtrToken) {
+        if (sym >= Token.eqlToken && sym <= Token.gtrToken) {
             nextSym();
         } else {
             error("Expected relation operator");
@@ -173,7 +168,7 @@ public class RParser {
 
     private void parseExpression() {
         parseTerm();
-        if (sym == Token.plusToken || sym == Token.minusToken) {
+        while (sym == Token.plusToken || sym == Token.minusToken) {
             nextSym();
             parseTerm();
         }
@@ -210,7 +205,7 @@ public class RParser {
 
     private void parseDesignator() {
         parseIdent();
-        if (sym == Token.openbracketToken) {
+        while (sym == Token.openbracketToken) {
             nextSym();
             parseExpression();
             parseToken("]");
@@ -243,16 +238,16 @@ public class RParser {
                         error("Expected number");
                     }
                     nextSym();
-                    checkToken("]");
+                    parseToken("]");
                 }
                 break;
             case Token.varToken:
+                nextSym();
                 break;
             default:
                 error("Expected 'var' or 'array'");
                 break;
         }
-        nextSym();
     }
 
     private void error(String s) {
