@@ -1,22 +1,21 @@
 package Machine;
 
+import Model.Instruction;
 import Model.KIND;
 import Model.OPERATION;
 import Model.Result;
 import Parser.Token;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Instructions {
-    Map<Integer, OPERATION> tokenOperationMap = Map.ofEntries(
-            Map.entry(Token.plusToken, OPERATION.add),
-            Map.entry(Token.minusToken, OPERATION.sub),
-            Map.entry(Token.timesToken, OPERATION.mul),
-            Map.entry(Token.divToken, OPERATION.div)
-    );
+public enum Instructions {
+    INSTANCE;
 
-    public static void compute(int op, Result x, Result y) {
+    public ArrayList<Instruction> instructions = new ArrayList<>();
+
+    public void compute(int op, Result x, Result y) {
         if (x.kind == KIND.CONST && y.kind == KIND.CONST) {
             switch (op) {
                 case Token.plusToken:
@@ -50,7 +49,7 @@ public class Instructions {
         }
     }
 
-    private static void load(Result x) {
+    private void load(Result x) {
         if (x.kind == KIND.VAR) {
             x.regNo = Register.allocate();
 //            PutF1(LDW, x.regno, basereg, x.address);

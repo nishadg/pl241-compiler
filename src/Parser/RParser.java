@@ -168,9 +168,9 @@ public class RParser {
 
     private void parseAssignment() {
         nextSym();
-        parseDesignator();
+        Result x = parseDesignator();
         parseToken("<-");
-        parseExpression();
+        Result y = parseExpression();
     }
 
     private Result parseExpression() {
@@ -178,7 +178,7 @@ public class RParser {
         while (sym == Token.plusToken || sym == Token.minusToken) {
             nextSym();
             Result y = parseTerm();
-            Instructions.compute(sym, x, y);
+            Instructions.INSTANCE.compute(sym, x, y);
         }
         return x;
     }
@@ -188,7 +188,7 @@ public class RParser {
         while (sym == Token.timesToken || sym == Token.divToken) {
             nextSym();
             Result y = parseFactor();
-            Instructions.compute(sym, x, y);
+            Instructions.INSTANCE.compute(sym, x, y);
         }
         return x;
     }
