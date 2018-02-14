@@ -37,6 +37,7 @@ public class RScanner { // encapsulates streams of tokens
                 if (Token.keywords.contains(sym)) {         // keyword
                     return Token.tokenValueMap.get(sym);
                 } else {                                    // identifier
+                    id++;
                     return Token.ident;
                 }
             } else {                                    // token is a symbol
@@ -93,7 +94,11 @@ public class RScanner { // encapsulates streams of tokens
         }
     }
 
-    public int number; // the last number encountered
+    public int getNumVal() {
+        return number;
+    }
+
+    private int number; // the last number encountered
     public int id; // the last identifier encountered
 
     /**

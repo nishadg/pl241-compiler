@@ -1,5 +1,10 @@
 package Parser;
 
+import Machine.Instructions;
+import Model.Instruction;
+import Model.KIND;
+import Model.Result;
+
 import java.io.IOException;
 
 import static Parser.Token.*;
@@ -53,7 +58,7 @@ public class RParser {
             nextSym();
             if (sym == openparenToken) {
                 nextSym();
-                while (sym == ident) { // TODO: compare with parseVarDecl for identifier sequence
+                while (sym == ident) {
                     nextSym();
                     if (sym == commaToken) {
                         nextSym();
@@ -145,9 +150,10 @@ public class RParser {
         }
     }
 
-    private void parseFuncCall() {
+    private Result parseFuncCall() {
         nextSym();
         parseIdent();
+        Result f = new Result(KIND.VAR, rScanner.id);
         if (sym == Token.openparenToken) {
             do {
                 nextSym();
@@ -157,6 +163,7 @@ public class RParser {
             } while (sym == Token.commaToken);
             parseToken(")");
         }
+        return f;
     }
 
     private void parseAssignment() {
@@ -166,50 +173,60 @@ public class RParser {
         parseExpression();
     }
 
-    private void parseExpression() {
-        parseTerm();
+    private Result parseExpression() {
+        Result x = parseTerm();
         while (sym == Token.plusToken || sym == Token.minusToken) {
             nextSym();
-            parseTerm();
+            Result y = parseTerm();
+            Instructions.compute(sym, x, y);
         }
+        return x;
     }
 
-    private void parseTerm() {
-        parseFactor();
+    private Result parseTerm() {
+        Result x = parseFactor();
         while (sym == Token.timesToken || sym == Token.divToken) {
             nextSym();
-            parseFactor();
+            Result y = parseFactor();
+            Instructions.compute(sym, x, y);
         }
+        return x;
     }
 
-    private void parseFactor() {
+    private Result parseFactor() {
+        Result f;
         switch (sym) {
             case Token.ident:
-                parseDesignator();
+                f = parseDesignator();
                 break;
             case Token.number:
+                f = new Result(KIND.CONST, rScanner.getNumVal());
                 nextSym();
                 break;
             case Token.openparenToken:
                 nextSym();
-                parseExpression();
+                f = parseExpression();
                 parseToken(")");
                 break;
             case Token.callToken:
-                parseFuncCall();
+                f = parseFuncCall();
                 break;
             default:
+                f = null;
                 error("Invalid factor");
         }
+        return f;
     }
 
-    private void parseDesignator() {
+    private Result parseDesignator() {
         parseIdent();
+        Result d = new Result(KIND.VAR, rScanner.id);
         while (sym == Token.openbracketToken) {
             nextSym();
             parseExpression();
             parseToken("]");
         }
+        return d;
     }
 
 
