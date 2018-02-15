@@ -1,4 +1,4 @@
-package Parser.test;
+package test;
 
 import Parser.RParser;
 

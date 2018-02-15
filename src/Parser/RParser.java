@@ -1,8 +1,9 @@
 package Parser;
 
-import Machine.Instructions;
+import Machine.Converter;
 import Model.Instruction;
-import Model.KIND;
+import Model.Kind;
+import Model.Operation;
 import Model.Result;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class RParser {
         parseStatSequence();
         parseToken("}");
         parseToken(".");
+        Converter.INSTANCE.end();
         System.out.println("Parsed successfully!");
     }
 
@@ -126,34 +128,53 @@ public class RParser {
 
     private void parseIfStatement() {
         nextSym();
-        parseRelation();
+        Result x = parseRelation();
         parseToken("then");
+        Result y = Converter.INSTANCE.branchOnCondition(x);
         parseStatSequence();
         if (sym == Token.elseToken) {
+            Result end = Converter.INSTANCE.branch();
+            y.fixuplocation = Instruction.getCounter();
             nextSym();
             parseStatSequence();
+        } else {
+            y.fixuplocation = Instruction.getCounter();
         }
         parseToken("fi");
     }
 
-    private void parseRelation() {
-        parseExpression();
-        parseRelOp();
-        parseExpression();
+    private Result parseRelation() {
+        Result x = parseExpression();
+        int code = parseRelOp();
+        Result y = parseExpression();
+        Converter.INSTANCE.compare(code, x, y);
+        return x;
     }
 
-    private void parseRelOp() {
+    private int parseRelOp() {
+        int code;
         if (sym >= Token.eqlToken && sym <= Token.gtrToken) {
+            code = sym;
             nextSym();
         } else {
+            code = 0;
             error("Expected relation operator");
         }
+        return code;
     }
 
     private Result parseFuncCall() {
         nextSym();
         parseIdent();
-        Result f = new Result(KIND.VAR, rScanner.id);
+        switch (rScanner.id) {
+            case 0:
+                return parseInputNum();
+            case 1:
+                return parseOutputNum();
+            case 2:
+                return parseOutputNewLine();
+        }
+        Result f = new Result(Kind.VAR, rScanner.id);
         if (sym == Token.openparenToken) {
             do {
                 nextSym();
@@ -166,19 +187,39 @@ public class RParser {
         return f;
     }
 
+    private Result parseOutputNewLine() {
+        Converter.INSTANCE.instructions.add(new Instruction(Operation.writeNL));
+        return null;
+    }
+
+    private Result parseOutputNum() {
+        parseToken("(");
+        Result x = parseExpression();
+        parseToken(")");
+        Converter.INSTANCE.instructions.add(new Instruction(Operation.write, x));
+        return x;
+    }
+
+    private Result parseInputNum() {
+        Converter.INSTANCE.instructions.add(new Instruction(Operation.read));
+        return new Result(Kind.VAR, 0);
+    }
+
     private void parseAssignment() {
         nextSym();
         Result x = parseDesignator();
         parseToken("<-");
         Result y = parseExpression();
+        Converter.INSTANCE.assign(x, y);
     }
 
     private Result parseExpression() {
         Result x = parseTerm();
         while (sym == Token.plusToken || sym == Token.minusToken) {
+            int op = sym;
             nextSym();
             Result y = parseTerm();
-            Instructions.INSTANCE.compute(sym, x, y);
+            Converter.INSTANCE.compute(op, x, y);
         }
         return x;
     }
@@ -186,9 +227,10 @@ public class RParser {
     private Result parseTerm() {
         Result x = parseFactor();
         while (sym == Token.timesToken || sym == Token.divToken) {
+            int op = sym;
             nextSym();
             Result y = parseFactor();
-            Instructions.INSTANCE.compute(sym, x, y);
+            Converter.INSTANCE.compute(op, x, y);
         }
         return x;
     }
@@ -200,7 +242,7 @@ public class RParser {
                 f = parseDesignator();
                 break;
             case Token.number:
-                f = new Result(KIND.CONST, rScanner.getNumVal());
+                f = new Result(Kind.CONST, rScanner.getNumVal());
                 nextSym();
                 break;
             case Token.openparenToken:
@@ -220,7 +262,7 @@ public class RParser {
 
     private Result parseDesignator() {
         parseIdent();
-        Result d = new Result(KIND.VAR, rScanner.id);
+        Result d = new Result(Kind.VAR, rScanner.id);
         while (sym == Token.openbracketToken) {
             nextSym();
             parseExpression();

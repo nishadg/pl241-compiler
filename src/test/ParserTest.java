@@ -1,4 +1,4 @@
-package Parser.test;
+package test;
 
 import Parser.RFileReader;
 import Parser.RParser;
@@ -7,7 +7,7 @@ import Parser.RScanner;
 import java.io.IOException;
 import java.util.Scanner;
 
-public class RFileReaderTest {
+public class ParserTest {
     public static void main(String args[]) {
 //        readFile();
 //        scanFile();
@@ -16,7 +16,7 @@ public class RFileReaderTest {
 
     private static void parseFile() {
         try {
-            RParser p = new RParser("./src/Test/test001.txt");
+            RParser p = new RParser("./src/TestCases/test007.txt");
             p.parse();
         } catch (IOException e) {
             e.printStackTrace();

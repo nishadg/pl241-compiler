@@ -98,6 +98,7 @@ public interface Token {
 
     Set<String> keywords = Set.of("then", "do", "od", "fi", "else", "let", "call", "if",
             "while", "return", "var", "array", "function", "procedure", "main");
+    Set<String> inbuiltFunctions = Set.of("InputNum", "OutputNum", "OutputNewLine");
 
     Set<Character> whitespaces = Set.of(' ', '\n', '\t', '\r');
     Set<Character> singleTokens = Set.of('(', '{', '[', ')', '}', ']', ';', ',', '.');

@@ -1,11 +1,19 @@
 package Parser;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RScanner { // encapsulates streams of tokens
 
     private RFileReader fileReader;
     private StringBuilder tokenBuilder;
+
+    private HashMap<String, Integer> identIDs = new HashMap<>(Map.of(
+            "InputNum", 0,
+            "OutputNum", 1,
+            "OutputNewLine", 2
+    ));
 
     int getLineNum() {
         return lineNum;
@@ -20,8 +28,8 @@ public class RScanner { // encapsulates streams of tokens
         tokenBuilder = new StringBuilder();
         // return current and advance to the next token on the input public
         try {
-            while(Token.whitespaces.contains(inputSym)){    // ignore whitespaces
-                if(inputSym == '\n') lineNum++;
+            while (Token.whitespaces.contains(inputSym)) {    // ignore whitespaces
+                if (inputSym == '\n') lineNum++;
                 inputSym = fileReader.GetSym();
             }
 
@@ -37,20 +45,27 @@ public class RScanner { // encapsulates streams of tokens
                 if (Token.keywords.contains(sym)) {         // keyword
                     return Token.tokenValueMap.get(sym);
                 } else {                                    // identifier
-                    id++;
+                    if (Token.inbuiltFunctions.contains(sym)) {
+                        id = identIDs.get(sym);
+                    } else if (identIDs.containsKey(sym)) {
+                        id = identIDs.get(sym);
+                    } else {
+                        id = idCounter++;
+                        identIDs.put(sym, id);
+                    }
                     return Token.ident;
                 }
             } else {                                    // token is a symbol
                 handleSymbol();
                 sym = tokenBuilder.toString();
-                if(Token.comments.contains(sym)){
+                if (Token.comments.contains(sym)) {
                     skipLine();
                     return getSym();
                 }
-                if(Token.tokenValueMap.containsKey(sym)) {
+                if (Token.tokenValueMap.containsKey(sym)) {
                     return Token.tokenValueMap.get(sym);
-                }else{
-                    Error("Invalid symbol encountered : ".concat(sym) );
+                } else {
+                    Error("Invalid symbol encountered : ".concat(sym));
                 }
             }
         } catch (IOException e) {
@@ -60,19 +75,19 @@ public class RScanner { // encapsulates streams of tokens
     }
 
     private void skipLine() throws IOException {
-        while(inputSym != '\n'){
+        while (inputSym != '\n') {
             inputSym = fileReader.GetSym();
         }
     }
 
     private void handleSymbol() throws IOException {
         tokenBuilder.append(inputSym);
-        if(Token.singleTokens.contains(inputSym)){
+        if (Token.singleTokens.contains(inputSym)) {
             inputSym = fileReader.GetSym();
             return;
         }
         inputSym = fileReader.GetSym();
-        if(!(Token.whitespaces.contains(inputSym) || Character.isLetterOrDigit(inputSym))){
+        if (!(Token.whitespaces.contains(inputSym) || Character.isLetterOrDigit(inputSym))) {
             handleSymbol();
         }
 
@@ -100,6 +115,7 @@ public class RScanner { // encapsulates streams of tokens
 
     private int number; // the last number encountered
     public int id; // the last identifier encountered
+    private int idCounter = 3;
 
     /**
      * Signal an error message
