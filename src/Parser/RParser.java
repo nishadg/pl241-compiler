@@ -1,12 +1,14 @@
 package Parser;
 
-import Machine.Converter;
+import IR.CFG;
+import IR.Converter;
+import Model.BasicBlock;
 import Model.Instruction;
 import Model.Kind;
-import Model.Operation;
 import Model.Result;
 
 import java.io.IOException;
+import java.util.ConcurrentModificationException;
 
 import static Parser.Token.*;
 
@@ -16,11 +18,13 @@ public class RParser {
 
     public RParser(String fileName) throws IOException {
         rScanner = new RScanner(fileName);
+        CFG.INSTANCE.setName(fileName);
     }
 
     public void parse() {
         sym = rScanner.getSym();
         parseToken("main");
+        Converter.INSTANCE.init();
         parseVarDecl();
         parseFuncDecl();
         parseToken("{");
@@ -131,15 +135,26 @@ public class RParser {
         Result x = parseRelation();
         parseToken("then");
         Result y = Converter.INSTANCE.branchOnCondition(x);
+        BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
+        BasicBlock leftBlock = Converter.INSTANCE.createLeftFor(parent);
+        Converter.INSTANCE.setCurrent(leftBlock);
         parseStatSequence();
+        leftBlock = Converter.INSTANCE.getCurrentBlock();
+        BasicBlock rightBlock;
         if (sym == Token.elseToken) {
             Result end = Converter.INSTANCE.branch();
             y.fixuplocation = Instruction.getCounter();
             nextSym();
+            rightBlock = Converter.INSTANCE.createRightFor(parent);
+            Converter.INSTANCE.setCurrent(rightBlock);
             parseStatSequence();
+            rightBlock = Converter.INSTANCE.getCurrentBlock();
         } else {
+            rightBlock = parent;
             y.fixuplocation = Instruction.getCounter();
         }
+        BasicBlock joinBlock = Converter.INSTANCE.createJoin(leftBlock, rightBlock);
+        Converter.INSTANCE.setCurrent(joinBlock);
         parseToken("fi");
     }
 
@@ -188,7 +203,7 @@ public class RParser {
     }
 
     private Result parseOutputNewLine() {
-        Converter.INSTANCE.instructions.add(new Instruction(Operation.writeNL));
+        Converter.INSTANCE.newLine();
         return null;
     }
 
@@ -196,12 +211,12 @@ public class RParser {
         parseToken("(");
         Result x = parseExpression();
         parseToken(")");
-        Converter.INSTANCE.instructions.add(new Instruction(Operation.write, x));
+        Converter.INSTANCE.output(x);
         return x;
     }
 
     private Result parseInputNum() {
-        Converter.INSTANCE.instructions.add(new Instruction(Operation.read));
+        Converter.INSTANCE.input();
         return new Result(Kind.VAR, 0);
     }
 

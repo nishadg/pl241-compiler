@@ -1,4 +1,4 @@
-package Machine;
+package IR;
 
 public class Register {
     private static int regCounter = 0;

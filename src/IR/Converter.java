@@ -1,9 +1,6 @@
-package Machine;
+package IR;
 
-import Model.Instruction;
-import Model.Kind;
-import Model.Operation;
-import Model.Result;
+import Model.*;
 import Parser.Token;
 
 import java.util.ArrayList;
@@ -14,7 +11,8 @@ import static Model.Kind.*;
 public enum Converter {
     INSTANCE;
 
-    public ArrayList<Instruction> instructions = new ArrayList<>();
+    private BasicBlock currentBlock;
+    private ArrayList<Instruction> instructions = new ArrayList<>();
     private Map<Integer, Operation> tokenOpMap = Map.ofEntries(
             Map.entry(Token.plusToken, Operation.add),
             Map.entry(Token.minusToken, Operation.sub),
@@ -61,7 +59,7 @@ public enum Converter {
             if (x.value == 0) x.regNo = 0;
             else {
                 Result x1 = new Result(REG, 0);
-                Instruction i = new Instruction(Operation.add,  x1, x);
+                Instruction i = new Instruction(Operation.add, x1, x);
                 instructions.add(i);
                 x.regNo = i.getNumber();
             }
@@ -113,6 +111,7 @@ public enum Converter {
                 System.out.print("Invalid condition");
         }
         instructions.add(i);
+
         return y;
     }
 
@@ -124,5 +123,69 @@ public enum Converter {
 
     public void end() {
         instructions.add(new Instruction(Operation.end));
+        CFG.INSTANCE.createDot();
     }
+
+    public void newLine() {
+        instructions.add(new Instruction(Operation.writeNL));
+    }
+
+    public void output(Result x) {
+        instructions.add(new Instruction(Operation.write, x));
+    }
+
+    public void input() {
+        instructions.add(new Instruction(Operation.read));
+    }
+
+    public void init() {
+        CFG.INSTANCE.addHead();
+        currentBlock = BasicBlock.create();
+    }
+
+    public BasicBlock createLeftFor(BasicBlock parent) {
+        BasicBlock left = BasicBlock.create();
+        left.parents.add(parent);
+        parent.leftBlock = left;
+        return left;
+    }
+
+
+    public BasicBlock createRightFor(BasicBlock parent) {
+        BasicBlock right = BasicBlock.create();
+        right.parents.add(parent);
+        parent.rightBlock = right;
+        return right;
+    }
+
+    public BasicBlock createJoin(BasicBlock leftBlock, BasicBlock rightBlock) {
+        BasicBlock joinBlock = BasicBlock.create();
+        joinBlock.isJoin = true;
+        leftBlock.leftBlock = joinBlock;
+        if (rightBlock.leftBlock == null) // check else/fallthrough
+            rightBlock.leftBlock = joinBlock;
+        else
+            rightBlock.rightBlock = joinBlock;
+        joinBlock.parents.add(leftBlock);
+        joinBlock.parents.add(rightBlock);
+        return joinBlock;
+    }
+
+    public void joinCurrentBlockTo(BasicBlock joinBlock) {
+        currentBlock.leftBlock = joinBlock;
+    }
+
+    public void setRight(BasicBlock parent, BasicBlock child) {
+        parent.rightBlock = child;
+        child.parents.add(parent);
+    }
+
+    public BasicBlock getCurrentBlock() {
+        return currentBlock;
+    }
+
+    public void setCurrent(BasicBlock current) {
+        this.currentBlock = current;
+    }
+
 }

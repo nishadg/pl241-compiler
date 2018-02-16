@@ -16,7 +16,7 @@ public class ParserTest {
 
     private static void parseFile() {
         try {
-            RParser p = new RParser("./src/TestCases/test007.txt");
+            RParser p = new RParser("./src/TestCases/test009.txt");
             p.parse();
         } catch (IOException e) {
             e.printStackTrace();
