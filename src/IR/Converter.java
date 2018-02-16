@@ -143,7 +143,7 @@ public enum Converter {
         currentBlock = BasicBlock.create();
     }
 
-    public BasicBlock createLeftFor(BasicBlock parent) {
+    public BasicBlock createLeftBlockFor(BasicBlock parent) {
         BasicBlock left = BasicBlock.create();
         left.parents.add(parent);
         parent.leftBlock = left;
@@ -151,14 +151,14 @@ public enum Converter {
     }
 
 
-    public BasicBlock createRightFor(BasicBlock parent) {
+    public BasicBlock createRightBlockFor(BasicBlock parent) {
         BasicBlock right = BasicBlock.create();
         right.parents.add(parent);
         parent.rightBlock = right;
         return right;
     }
 
-    public BasicBlock createJoin(BasicBlock leftBlock, BasicBlock rightBlock) {
+    public BasicBlock createJoinBlock(BasicBlock leftBlock, BasicBlock rightBlock) {
         BasicBlock joinBlock = BasicBlock.create();
         joinBlock.isJoin = true;
         leftBlock.leftBlock = joinBlock;
@@ -184,7 +184,7 @@ public enum Converter {
         return currentBlock;
     }
 
-    public void setCurrent(BasicBlock current) {
+    public void setCurrentBlock(BasicBlock current) {
         this.currentBlock = current;
     }
 

@@ -8,7 +8,6 @@ import Model.Kind;
 import Model.Result;
 
 import java.io.IOException;
-import java.util.ConcurrentModificationException;
 
 import static Parser.Token.*;
 
@@ -136,8 +135,8 @@ public class RParser {
         parseToken("then");
         Result y = Converter.INSTANCE.branchOnCondition(x);
         BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
-        BasicBlock leftBlock = Converter.INSTANCE.createLeftFor(parent);
-        Converter.INSTANCE.setCurrent(leftBlock);
+        BasicBlock leftBlock = Converter.INSTANCE.createLeftBlockFor(parent);
+        Converter.INSTANCE.setCurrentBlock(leftBlock);
         parseStatSequence();
         leftBlock = Converter.INSTANCE.getCurrentBlock();
         BasicBlock rightBlock;
@@ -145,16 +144,16 @@ public class RParser {
             Result end = Converter.INSTANCE.branch();
             y.fixuplocation = Instruction.getCounter();
             nextSym();
-            rightBlock = Converter.INSTANCE.createRightFor(parent);
-            Converter.INSTANCE.setCurrent(rightBlock);
+            rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
+            Converter.INSTANCE.setCurrentBlock(rightBlock);
             parseStatSequence();
             rightBlock = Converter.INSTANCE.getCurrentBlock();
         } else {
             rightBlock = parent;
             y.fixuplocation = Instruction.getCounter();
         }
-        BasicBlock joinBlock = Converter.INSTANCE.createJoin(leftBlock, rightBlock);
-        Converter.INSTANCE.setCurrent(joinBlock);
+        BasicBlock joinBlock = Converter.INSTANCE.createJoinBlock(leftBlock, rightBlock);
+        Converter.INSTANCE.setCurrentBlock(joinBlock);
         parseToken("fi");
     }
 
