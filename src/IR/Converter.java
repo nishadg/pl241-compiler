@@ -158,7 +158,7 @@ public enum Converter {
         return right;
     }
 
-    public BasicBlock createJoinBlock(BasicBlock leftBlock, BasicBlock rightBlock) {
+    public BasicBlock createIfJoinBlock(BasicBlock leftBlock, BasicBlock rightBlock) {
         BasicBlock joinBlock = BasicBlock.create();
         joinBlock.isJoin = true;
         leftBlock.leftBlock = joinBlock;
@@ -188,4 +188,14 @@ public enum Converter {
         this.currentBlock = current;
     }
 
+    public BasicBlock createWhileJoinBlock() {
+        BasicBlock joinBlock = currentBlock;
+        joinBlock.isJoin = true;
+        return joinBlock;
+    }
+
+    public void fixupWhileJoinBlock(BasicBlock leftBlock, BasicBlock joinBlock) {
+        leftBlock.leftBlock = joinBlock;
+        joinBlock.parents.add(leftBlock);
+    }
 }

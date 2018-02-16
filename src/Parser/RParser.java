@@ -47,7 +47,7 @@ public class RParser {
 
     private void checkToken(String token) {
         if (sym != Token.tokenValueMap.get(token)) {
-            error("Expected ".concat(token));
+            error("Expected " + token + " at line " + rScanner.getLineNum());
         }
     }
 
@@ -123,10 +123,22 @@ public class RParser {
 
     private void parseWhileStatement() {
         nextSym();
-        parseRelation();
+        BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
+        BasicBlock leftBlock = Converter.INSTANCE.createLeftBlockFor(parent);
+        BasicBlock rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
+        BasicBlock joinBlock = Converter.INSTANCE.createWhileJoinBlock();
+        Converter.INSTANCE.setCurrentBlock(joinBlock);
+        Result x = parseRelation();
         parseToken("do");
+        Result y = Converter.INSTANCE.branchOnCondition(x);
+        Converter.INSTANCE.setCurrentBlock(leftBlock);
         parseStatSequence();
+        Result end = Converter.INSTANCE.branch();
         parseToken("od");
+        y.fixuplocation = Instruction.getCounter();
+        leftBlock = Converter.INSTANCE.getCurrentBlock();
+        Converter.INSTANCE.fixupWhileJoinBlock(leftBlock, joinBlock);
+        Converter.INSTANCE.setCurrentBlock(rightBlock);
     }
 
     private void parseIfStatement() {
@@ -152,7 +164,7 @@ public class RParser {
             rightBlock = parent;
             y.fixuplocation = Instruction.getCounter();
         }
-        BasicBlock joinBlock = Converter.INSTANCE.createJoinBlock(leftBlock, rightBlock);
+        BasicBlock joinBlock = Converter.INSTANCE.createIfJoinBlock(leftBlock, rightBlock);
         Converter.INSTANCE.setCurrentBlock(joinBlock);
         parseToken("fi");
     }
@@ -203,6 +215,8 @@ public class RParser {
 
     private Result parseOutputNewLine() {
         Converter.INSTANCE.newLine();
+        parseToken("(");
+        parseToken(")");
         return null;
     }
 
@@ -216,6 +230,8 @@ public class RParser {
 
     private Result parseInputNum() {
         Converter.INSTANCE.input();
+        parseToken("(");
+        parseToken(")");
         return new Result(Kind.VAR, 0);
     }
 

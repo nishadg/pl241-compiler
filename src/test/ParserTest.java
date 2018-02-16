@@ -4,20 +4,41 @@ import Parser.RFileReader;
 import Parser.RParser;
 import Parser.RScanner;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
 public class ParserTest {
+    private static final String PATH = "./src/TestCases/";
+
     public static void main(String args[]) {
 //        readFile();
 //        scanFile();
-        parseFile();
+        parseAllFiles();
+//        parseFile("test031.txt");
     }
 
-    private static void parseFile() {
+    private static void parseFile(String fileName) {
+        RParser p = null;
         try {
-            RParser p = new RParser("./src/TestCases/test009.txt");
+            p = new RParser(PATH.concat(fileName));
             p.parse();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void parseAllFiles() {
+        try {
+            File[] files = new File(PATH).listFiles();
+            for (File file : files) {
+                if (file.isFile()) {
+                    System.out.println("Parsing ".concat(file.getName()));
+                    RParser p = new RParser(PATH.concat(file.getName()));
+                    p.parse();
+
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -39,7 +60,7 @@ public class ParserTest {
 
     private static void scanFile() {
         try {
-            RScanner scanner = new RScanner("./src/Test/test001.txt");
+            RScanner scanner = new RScanner("./src/Test/test009.txt");
             Scanner sc = new Scanner(System.in);
             sc.nextLine();
             String input;
