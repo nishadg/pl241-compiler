@@ -1,6 +1,7 @@
 package IR;
 
 import Model.*;
+import Model.Register;
 import Parser.Token;
 
 import java.util.ArrayList;
@@ -27,74 +28,58 @@ public enum Converter {
 
     public void compute(int op, Result x, Result y) {
         if (x.kind == Kind.CONST && y.kind == Kind.CONST) {
-            switch (op) {
-                case Token.plusToken:
-                    x.value += y.value;
-                    break;
-                case Token.minusToken:
-                    x.value -= y.value;
-                    break;
-                case Token.timesToken:
-                    x.value *= y.value;
-                    break;
-                case Token.divToken:
-                    x.value /= y.value;
-                    break;
-                default:
-                    System.out.print("Invalid operation");
-            }
+            Constant c = (Constant) x;
+            x = c.compute(op, y);
         } else {
-            load(x);
+            x = load(x);
             Instruction i;
             if (y.kind == Kind.CONST) {
                 i = new Instruction(tokenOpImmMap.get(op), x, y);
             } else {
-                load(y);
+                y = load(y);
                 i = new Instruction(tokenOpMap.get(op), x, y);
             }
             currentBlock.addInstruction(i);
         }
     }
 
-    void load(Result x) {
+    Register load(Result x) {
         if (x.kind == VAR) {
             Instruction i = new Instruction(Operation.load, x);
-            x.regNo = i.getNumber();
-            x.kind = REG;
+            return new Register(i.getNumber());
         } else if (x.kind == CONST) {
-            if (x.value == 0) x.regNo = 0;
-            else {
-                Result x1 = new Result(REG, 0);
-                Instruction i = new Instruction(Operation.addi, x1, x);
-                currentBlock.addInstruction(i);
-                x.regNo = i.getNumber();
-            }
-            x.kind = REG;
+            // TODO: Use R0 for 0 value
+            Register r = new Register(0);
+            Instruction i = new Instruction(Operation.addi, r, x);
+            currentBlock.addInstruction(i);
+            r.regNo = i.getNumber();
+            return r;
+        } else {
+            return (Register) x;
         }
     }
 
     public void assign(Result x, Result y) { // let x <= y;
         if (y.kind == CONST) {
-            Result x1 = new Result(REG, 0);
-            Instruction i = new Instruction(Operation.addi, x1, y);
-            x1.regNo = i.getNumber();
+            Register r = new Register(0);
+            Instruction i = new Instruction(Operation.addi, r, y);
+            r.regNo = i.getNumber();
             currentBlock.addInstruction(i);
-            currentBlock.addInstruction(new Instruction(Operation.move, x1, x));
+            currentBlock.addInstruction(new Instruction(Operation.move, r, x));
         } else {
             currentBlock.addInstruction(new Instruction(Operation.move, y, x));
         }
     }
 
-    public Result compare(int op, Result x, Result y) {
-        x.cond = op;
+    public Condition compare(int op, Result x, Result y) {
         currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
-        return x;
+        return new Condition(op);
     }
 
-    public Result branchOnCondition(Result x) {
+    public Address branchOnCondition(Condition x) {
         Instruction i = null;
-        Result y = new Result(COND);
-        switch (x.cond) {
+        Address y = new Address(0);
+        switch (x.operator) {
             case Token.eqlToken:
                 i = new Instruction(Operation.bne, x, y);
                 break;
@@ -121,8 +106,8 @@ public enum Converter {
         return y;
     }
 
-    public Result branch() {
-        Result y = new Result(COND, 0);
+    public Address branch() {
+        Address y = new Address(0);
         currentBlock.addInstruction(new Instruction(Operation.bra, y));
         return y;
     }
@@ -183,15 +168,6 @@ public enum Converter {
         joinBlock.parents.add(leftBlock);
         joinBlock.parents.add(rightBlock);
         return joinBlock;
-    }
-
-    public void joinCurrentBlockTo(BasicBlock joinBlock) {
-        currentBlock.leftBlock = joinBlock;
-    }
-
-    public void setRight(BasicBlock parent, BasicBlock child) {
-        parent.rightBlock = child;
-        child.parents.add(parent);
     }
 
     public BasicBlock getCurrentBlock() {

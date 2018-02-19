@@ -21,14 +21,14 @@ public class Instruction {
 
     public Instruction(Operation op, Result x, Result y) {
         this.op = op;
-        this.x = new Result(x);
-        this.y = new Result(y);
+        this.x = x;
+        this.y = y;
         number = counter++;
     }
 
     public Instruction(Operation op, Result x) {
         this.op = op;
-        this.x = new Result(x);
+        this.x = x;
         number = counter++;
     }
 

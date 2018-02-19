@@ -9,10 +9,16 @@ public class RScanner { // encapsulates streams of tokens
     private RFileReader fileReader;
     private StringBuilder tokenBuilder;
 
-    private HashMap<String, Integer> identIDs = new HashMap<>(Map.of(
+    private HashMap<String, Integer> stringToID = new HashMap<>(Map.of(
             "InputNum", 0,
             "OutputNum", 1,
             "OutputNewLine", 2
+    ));
+
+    private HashMap<Integer, String> IDToString = new HashMap<>(Map.of(
+            0, "InputNum",
+            1, "OutputNum",
+            2, "OutputNewLine"
     ));
 
     int getLineNum() {
@@ -46,12 +52,13 @@ public class RScanner { // encapsulates streams of tokens
                     return Token.tokenValueMap.get(sym);
                 } else {                                    // identifier
                     if (Token.inbuiltFunctions.contains(sym)) {
-                        id = identIDs.get(sym);
-                    } else if (identIDs.containsKey(sym)) {
-                        id = identIDs.get(sym);
+                        id = stringToID.get(sym);
+                    } else if (stringToID.containsKey(sym)) {
+                        id = stringToID.get(sym);
                     } else {
                         id = idCounter++;
-                        identIDs.put(sym, id);
+                        stringToID.put(sym, id);
+                        IDToString.put(id, sym);
                     }
                     return Token.ident;
                 }
@@ -127,5 +134,9 @@ public class RScanner { // encapsulates streams of tokens
     public RScanner(String fileName) throws IOException {
         fileReader = new RFileReader(fileName);
         inputSym = fileReader.GetSym();
+    }
+
+    public String getStringfromID(int id) {
+        return IDToString.get(id);
     }
 }

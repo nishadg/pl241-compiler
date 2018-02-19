@@ -1,5 +1,5 @@
 package Model;
 
 public enum Kind {
-    CONST, VAR, REG, COND
+    CONST, VAR, REG, ADDR, COND
 }

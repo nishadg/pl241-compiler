@@ -2,10 +2,7 @@ package Parser;
 
 import IR.CFG;
 import IR.Converter;
-import Model.BasicBlock;
-import Model.Instruction;
-import Model.Kind;
-import Model.Result;
+import Model.*;
 
 import java.io.IOException;
 
@@ -130,14 +127,14 @@ public class RParser {
         BasicBlock rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
         BasicBlock joinBlock = Converter.INSTANCE.createWhileJoinBlock();
         Converter.INSTANCE.setCurrentBlock(joinBlock);
-        Result x = parseRelation();
+        Condition x = parseRelation();
         parseToken("do");
-        Result y = Converter.INSTANCE.branchOnCondition(x);
+        Address y = Converter.INSTANCE.branchOnCondition(x);
         Converter.INSTANCE.setCurrentBlock(leftBlock);
         parseStatSequence();
-        Result end = Converter.INSTANCE.branch();
+        Address end = Converter.INSTANCE.branch();
         parseToken("od");
-        y.fixuplocation = Instruction.getCounter();
+        y.location = Instruction.getCounter();
         leftBlock = Converter.INSTANCE.getCurrentBlock();
         Converter.INSTANCE.fixupWhileJoinBlock(leftBlock, joinBlock);
         Converter.INSTANCE.setCurrentBlock(rightBlock);
@@ -145,9 +142,9 @@ public class RParser {
 
     private void parseIfStatement() {
         nextSym();
-        Result x = parseRelation();
+        Condition x = parseRelation();
         parseToken("then");
-        Result y = Converter.INSTANCE.branchOnCondition(x);
+        Address y = Converter.INSTANCE.branchOnCondition(x);
         BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
         BasicBlock leftBlock = Converter.INSTANCE.createLeftBlockFor(parent);
         Converter.INSTANCE.setCurrentBlock(leftBlock);
@@ -156,7 +153,7 @@ public class RParser {
         BasicBlock rightBlock;
         if (sym == Token.elseToken) {
             Result end = Converter.INSTANCE.branch();
-            y.fixuplocation = Instruction.getCounter();
+            y.location = Instruction.getCounter();
             nextSym();
             rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
             Converter.INSTANCE.setCurrentBlock(rightBlock);
@@ -164,19 +161,18 @@ public class RParser {
             rightBlock = Converter.INSTANCE.getCurrentBlock();
         } else {
             rightBlock = parent;
-            y.fixuplocation = Instruction.getCounter();
+            y.location = Instruction.getCounter();
         }
         BasicBlock joinBlock = Converter.INSTANCE.createIfJoinBlock(leftBlock, rightBlock);
         Converter.INSTANCE.setCurrentBlock(joinBlock);
         parseToken("fi");
     }
 
-    private Result parseRelation() {
+    private Condition parseRelation() {
         Result x = parseExpression();
         int code = parseRelOp();
         Result y = parseExpression();
-        Converter.INSTANCE.compare(code, x, y);
-        return x;
+        return Converter.INSTANCE.compare(code, x, y);
     }
 
     private int parseRelOp() {
@@ -202,7 +198,7 @@ public class RParser {
             case 2:
                 return parseOutputNewLine();
         }
-        Result f = new Result(Kind.VAR, rScanner.id);
+        Result f = new Variable(rScanner.id, rScanner.getStringfromID(rScanner.id));
         if (sym == Token.openparenToken) {
             do {
                 nextSym();
@@ -234,7 +230,7 @@ public class RParser {
         Converter.INSTANCE.input();
         parseToken("(");
         parseToken(")");
-        return new Result(Kind.VAR, 0);
+        return new Register(0);
     }
 
     private void parseAssignment() {
@@ -274,7 +270,7 @@ public class RParser {
                 f = parseDesignator();
                 break;
             case Token.number:
-                f = new Result(Kind.CONST, rScanner.getNumVal());
+                f = new Constant(rScanner.getNumVal());
                 nextSym();
                 break;
             case Token.openparenToken:
@@ -294,7 +290,7 @@ public class RParser {
 
     private Result parseDesignator() {
         parseIdent();
-        Result d = new Result(Kind.VAR, rScanner.id);
+        Result d = new Variable(rScanner.id,  rScanner.getStringfromID(rScanner.id));
         while (sym == Token.openbracketToken) {
             nextSym();
             parseExpression();
