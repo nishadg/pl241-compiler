@@ -12,12 +12,17 @@ public enum Converter {
     INSTANCE;
 
     private BasicBlock currentBlock;
-    private ArrayList<Instruction> instructions = new ArrayList<>();
     private Map<Integer, Operation> tokenOpMap = Map.ofEntries(
             Map.entry(Token.plusToken, Operation.add),
             Map.entry(Token.minusToken, Operation.sub),
             Map.entry(Token.divToken, Operation.div),
             Map.entry(Token.timesToken, Operation.mul)
+    );
+    private Map<Integer, Operation> tokenOpImmMap = Map.ofEntries(
+            Map.entry(Token.plusToken, Operation.addi),
+            Map.entry(Token.minusToken, Operation.subi),
+            Map.entry(Token.divToken, Operation.divi),
+            Map.entry(Token.timesToken, Operation.muli)
     );
 
     public void compute(int op, Result x, Result y) {
@@ -40,13 +45,14 @@ public enum Converter {
             }
         } else {
             load(x);
-            if (y.kind != Kind.CONST) {
+            Instruction i;
+            if (y.kind == Kind.CONST) {
+                i = new Instruction(tokenOpImmMap.get(op), x, y);
+            } else {
                 load(y);
+                i = new Instruction(tokenOpMap.get(op), x, y);
             }
-            Instruction i = new Instruction(tokenOpMap.get(op), x, y);
-            x.kind = REG;
-            x.regNo = i.getNumber();
-            instructions.add(i);
+            currentBlock.addInstruction(i);
         }
     }
 
@@ -59,29 +65,29 @@ public enum Converter {
             if (x.value == 0) x.regNo = 0;
             else {
                 Result x1 = new Result(REG, 0);
-                Instruction i = new Instruction(Operation.add, x1, x);
-                instructions.add(i);
+                Instruction i = new Instruction(Operation.addi, x1, x);
+                currentBlock.addInstruction(i);
                 x.regNo = i.getNumber();
             }
             x.kind = REG;
         }
     }
 
-    public void assign(Result x, Result y) {
+    public void assign(Result x, Result y) { // let x <= y;
         if (y.kind == CONST) {
             Result x1 = new Result(REG, 0);
-            Instruction i = new Instruction(Operation.add, x1, y);
+            Instruction i = new Instruction(Operation.addi, x1, y);
             x1.regNo = i.getNumber();
-            instructions.add(i);
-            instructions.add(new Instruction(Operation.move, x1, x));
+            currentBlock.addInstruction(i);
+            currentBlock.addInstruction(new Instruction(Operation.move, x1, x));
         } else {
-            instructions.add(new Instruction(Operation.move, y, x));
+            currentBlock.addInstruction(new Instruction(Operation.move, y, x));
         }
     }
 
     public Result compare(int op, Result x, Result y) {
         x.cond = op;
-        instructions.add(new Instruction(Operation.cmp, x, y));
+        currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
         return x;
     }
 
@@ -110,37 +116,45 @@ public enum Converter {
             default:
                 System.out.print("Invalid condition");
         }
-        instructions.add(i);
+        currentBlock.addInstruction(i);
 
         return y;
     }
 
     public Result branch() {
         Result y = new Result(COND, 0);
-        instructions.add(new Instruction(Operation.bra, y));
+        currentBlock.addInstruction(new Instruction(Operation.bra, y));
         return y;
     }
 
     public void end() {
-        instructions.add(new Instruction(Operation.end));
-        CFG.INSTANCE.createDot();
+        currentBlock.addInstruction(new Instruction(Operation.end));
+        CFG.INSTANCE.createDotFile();
+        CFG.INSTANCE.graphs = new ArrayList<>();
+        BasicBlock.resetCounter();
+        Instruction.resetCounter();
     }
 
     public void newLine() {
-        instructions.add(new Instruction(Operation.writeNL));
+        currentBlock.addInstruction(new Instruction(Operation.writeNL));
     }
 
     public void output(Result x) {
-        instructions.add(new Instruction(Operation.write, x));
+        currentBlock.addInstruction(new Instruction(Operation.write, x));
     }
 
     public void input() {
-        instructions.add(new Instruction(Operation.read));
+        currentBlock.addInstruction(new Instruction(Operation.read));
     }
 
-    public void init() {
-        CFG.INSTANCE.addHead();
+    public void createFunction(String name) {
+        CFG.INSTANCE.addGraph();
         currentBlock = BasicBlock.create();
+        currentBlock.name = name;
+    }
+
+    public void backToMain() {
+        currentBlock = CFG.INSTANCE.resetCurrentGraphToMain();
     }
 
     public BasicBlock createLeftBlockFor(BasicBlock parent) {
@@ -198,4 +212,6 @@ public enum Converter {
         leftBlock.leftBlock = joinBlock;
         joinBlock.parents.add(leftBlock);
     }
+
+
 }

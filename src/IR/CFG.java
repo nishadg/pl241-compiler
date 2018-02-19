@@ -1,6 +1,7 @@
 package IR;
 
 import Model.BasicBlock;
+import test.DotGenerator;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,52 +11,34 @@ import java.util.ArrayList;
 public enum CFG {
     INSTANCE;
     ArrayList<ArrayList<BasicBlock>> graphs = new ArrayList<>();
-    private String fileName;
-    public ArrayList<BasicBlock> currentGraph;
+    private ArrayList<BasicBlock> currentGraph;
+    private String name;
 
-    public void addHead() {
+    public void addGraph() {
         currentGraph = new ArrayList<>();
         graphs.add(currentGraph);
     }
 
-    public void createDot() {
-        for (ArrayList graph : graphs) {
-            try {
-                generateGraph(graph);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    public BasicBlock resetCurrentGraphToMain() {
+        currentGraph = graphs.get(0);
+        return currentGraph.get(0);
+    }
+
+    public void createDotFile() {
+        try {
+            DotGenerator dotGenerator = new DotGenerator(name);
+            dotGenerator.generateCFG(graphs);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
     }
 
-    private void generateGraph(ArrayList<BasicBlock> graph) throws IOException {
-        deleteOld();
-        RandomAccessFile file = new RandomAccessFile(getPath(fileName), "rw");
-        file.writeBytes("digraph {");
-
-        for (BasicBlock block : graph) {
-            if (block.leftBlock != null)
-                file.writeBytes(block.index + " -> " + block.leftBlock.index + "\n");
-            if (block.rightBlock != null)
-                file.writeBytes(block.index + " -> " + block.rightBlock.index + "\n");
-        }
-        file.writeBytes("\n}");
-        file.close();
-        Runtime.getRuntime().exec("dot " + getPath(fileName) + "  -Tpng -o ./VCG/" + fileName + ".png");
+    public void addToCurrentGraph(BasicBlock b) {
+        currentGraph.add(b);
     }
 
-    private void deleteOld() {
-        File f = new File(getPath(fileName));
-        f.delete();
+    public void setName(String name) {
+        this.name = name;
     }
-
-    private String getPath(String fileName) {
-        return "./VCG/".concat(fileName).concat(".dot");
-    }
-
-    public void setName(String fileName) {
-        this.fileName = fileName.substring(fileName.lastIndexOf('/') + 1, fileName.lastIndexOf('.'));
-    }
-
-
 }

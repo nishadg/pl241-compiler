@@ -4,6 +4,9 @@ public class Instruction {
     public static int getCounter() {
         return counter;
     }
+    public static void resetCounter() {
+        counter = 0;
+    }
 
     private static int counter = 0;
     Operation op;
@@ -32,5 +35,15 @@ public class Instruction {
     public Instruction(Operation op) {
         this.op = op;
         number = counter++;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(number).append(": ");
+        stringBuilder.append(op.name());
+        if(x != null) stringBuilder.append(" ").append(x);
+        if(y != null) stringBuilder.append(" ").append(y);
+        return stringBuilder.toString();
     }
 }

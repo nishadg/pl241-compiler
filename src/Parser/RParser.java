@@ -23,7 +23,7 @@ public class RParser {
     public void parse() {
         sym = rScanner.getSym();
         parseToken("main");
-        Converter.INSTANCE.init();
+        Converter.INSTANCE.createFunction("MAIN");
         parseVarDecl();
         parseFuncDecl();
         parseToken("{");
@@ -60,6 +60,7 @@ public class RParser {
         while (sym == Token.funcToken || sym == Token.procToken) {
             nextSym();
             checkIdent();
+            Converter.INSTANCE.createFunction(""); //TODO get name
             nextSym();
             if (sym == openparenToken) {
                 nextSym();
@@ -74,6 +75,7 @@ public class RParser {
             parseToken(";");
             parseFuncBody();
             parseToken(";");
+            Converter.INSTANCE.backToMain();
         }
     }
 

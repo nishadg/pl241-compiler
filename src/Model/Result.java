@@ -9,7 +9,7 @@ public class Result {
 
     public Result(Kind kind, int value) {
         this.kind = kind;
-        switch (kind){
+        switch (kind) {
             case VAR:
                 address = value;
                 break;
@@ -21,7 +21,7 @@ public class Result {
         }
     }
 
-    public Result(Kind k){
+    public Result(Kind k) {
         kind = k;
     }
 
@@ -32,6 +32,20 @@ public class Result {
         address = x.address;
         value = x.value;
         regNo = x.regNo;
+    }
+
+    @Override
+    public String toString() {
+        switch (kind) {
+            case VAR:
+                return String.valueOf(address);
+            case CONST:
+                return "#" + String.valueOf(value);
+            case REG:
+                return "(" + String.valueOf(regNo) + ")";
+            default:
+                return "UNKNOWN";
+        }
     }
 }
 
