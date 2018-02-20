@@ -24,6 +24,7 @@ public class Variable extends Result {
         this.id = id;
         this.name = name;
         indices = new ArrayList<>();
+        dimensions = new ArrayList<>();
     }
 
     @Override
