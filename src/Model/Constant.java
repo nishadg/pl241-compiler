@@ -37,4 +37,5 @@ public class Constant extends Result {
     public String toString() {
         return "#" + value;
     }
+
 }

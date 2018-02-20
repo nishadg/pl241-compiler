@@ -14,4 +14,5 @@ public class Condition extends Result{
     public String toString() {
         return "Should you be printing this?";
     }
+
 }

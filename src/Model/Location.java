@@ -12,4 +12,5 @@ public class Location extends Result{
     public String toString() {
         return "(" + location + ")";
     }
+
 }

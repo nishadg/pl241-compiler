@@ -6,6 +6,9 @@ import IR.ScopeManager;
 import Model.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import static Parser.Token.*;
 
@@ -305,23 +308,27 @@ public class RParser {
 
     private Result parseDesignator() {
         checkIdent();
-        Result d = ScopeManager.INSTANCE.findTokenInScope(rScanner.getCurrentToken());
+        Variable var = Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(rScanner.getCurrentToken())).copy();
         nextSym();
         while (sym == Token.openbracketToken) {
             nextSym();
-            parseExpression();
+            Result index = parseExpression();
+            assert var != null;
+            var.indices.add(index);
             parseToken("]");
         }
-        return d;
+        return var;
     }
 
 
     private void parseVarDecl() {
         while (sym == Token.arrToken || sym == Token.varToken) {
-            parseTypeDecl();
+            List<Integer> dimensions = parseTypeDecl();
             checkIdent();
-
             while (sym == ident) {
+                Variable var = ScopeManager.INSTANCE.findTokenInScope(rScanner.getCurrentToken());
+                assert var != null;
+                var.dimensions = new ArrayList<>(dimensions);
                 nextSym();
                 if (sym == commaToken) {
                     nextSym();
@@ -331,7 +338,8 @@ public class RParser {
         }
     }
 
-    private void parseTypeDecl() {
+    private List<Integer> parseTypeDecl() {
+        List<Integer> dimensions = new ArrayList<>();
         switch (sym) {
             case Token.arrToken:
                 nextSym();
@@ -341,6 +349,7 @@ public class RParser {
                     if (sym != Token.number) {
                         error("Expected number");
                     }
+                    dimensions.add(rScanner.getNumVal());
                     nextSym();
                     parseToken("]");
                 }
@@ -352,6 +361,7 @@ public class RParser {
                 error("Expected 'var' or 'array'");
                 break;
         }
+        return dimensions;
     }
 
     private void error(String s) {

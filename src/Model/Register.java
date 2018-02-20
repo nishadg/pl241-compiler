@@ -11,4 +11,5 @@ public class Register extends Result {
     public String toString() {
         return "R" + regNo;
     }
+
 }
