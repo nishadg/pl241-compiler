@@ -193,4 +193,12 @@ public enum Converter {
         setCurrentBlock(child);
         return child;
     }
+
+    public Location callFunction(Variable functionName) {
+        return currentBlock.addInstruction(new Instruction(Operation.call, functionName));
+    }
+
+    public void returnFromFunction(Result returnVal) {
+        currentBlock.addInstruction(new Instruction(Operation.ret, returnVal));
+    }
 }

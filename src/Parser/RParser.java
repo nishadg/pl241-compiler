@@ -130,7 +130,8 @@ public class RParser {
 
     private void parseReturnStatement() {
         nextSym();
-        parseExpression();
+        Result returnVal = parseExpression();
+        Converter.INSTANCE.returnFromFunction(returnVal);
     }
 
     private void parseWhileStatement() {
@@ -207,7 +208,9 @@ public class RParser {
 
     private Result parseFuncCall() {
         nextSym();
-        parseIdent();
+        checkIdent();
+        String functionName = rScanner.getCurrentToken();
+        nextSym();
         switch (rScanner.id) {
             case 0:
                 return parseInputNum();
@@ -216,7 +219,6 @@ public class RParser {
             case 2:
                 return parseOutputNewLine();
         }
-        ScopeManager.INSTANCE.createScope(rScanner.getCurrentToken());
         if (sym == Token.openparenToken) {
             do {
                 nextSym();
@@ -226,7 +228,7 @@ public class RParser {
             } while (sym == Token.commaToken);
             parseToken(")");
         }
-        return new Location(Instruction.getCounter());
+        return Converter.INSTANCE.callFunction(ScopeManager.INSTANCE.findTokenInScope(functionName));
     }
 
     private Result parseOutputNewLine() {
