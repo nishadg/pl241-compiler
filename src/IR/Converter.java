@@ -188,4 +188,9 @@ public enum Converter {
     }
 
 
+    public BasicBlock createChildOfCurrentBlock() {
+        BasicBlock child = createLeftBlockFor(currentBlock);
+        setCurrentBlock(child);
+        return child;
+    }
 }

@@ -132,18 +132,22 @@ public class RParser {
 
     private void parseWhileStatement() {
         nextSym();
-        BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
+        BasicBlock parent = Converter.INSTANCE.createChildOfCurrentBlock();
         BasicBlock leftBlock = Converter.INSTANCE.createLeftBlockFor(parent);
         BasicBlock rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
         BasicBlock joinBlock = Converter.INSTANCE.createWhileJoinBlock();
         Converter.INSTANCE.setCurrentBlock(joinBlock);
+        int loopBackAddress = Instruction.getCounter();
         Condition x = parseRelation();
-        parseToken("do");
         Location y = Converter.INSTANCE.branchOnCondition(x);
         Converter.INSTANCE.setCurrentBlock(leftBlock);
+
+        parseToken("do");
         parseStatSequence();
         Location end = Converter.INSTANCE.branch();
+        end.location = loopBackAddress;
         parseToken("od");
+
         y.location = Instruction.getCounter();
         leftBlock = Converter.INSTANCE.getCurrentBlock();
         Converter.INSTANCE.fixupWhileJoinBlock(leftBlock, joinBlock);
