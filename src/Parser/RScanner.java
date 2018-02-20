@@ -1,5 +1,8 @@
 package Parser;
 
+import IR.ScopeManager;
+import Model.Variable;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +12,14 @@ public class RScanner { // encapsulates streams of tokens
     private RFileReader fileReader;
     private StringBuilder tokenBuilder;
 
-    private HashMap<String, Integer> stringToID = new HashMap<>(Map.of(
+    public String getCurrentToken() {
+        return currentToken;
+    }
+
+    private String currentToken;
+
+
+    private HashMap<String, Integer> inbuiltFunctions = new HashMap<>(Map.of(
             "InputNum", 0,
             "OutputNum", 1,
             "OutputNewLine", 2
@@ -39,40 +49,41 @@ public class RScanner { // encapsulates streams of tokens
                 inputSym = fileReader.GetSym();
             }
 
-            String sym;
             if (Character.isDigit(inputSym)) {          // token is a number
                 handleNumber();
-                sym = tokenBuilder.toString();
-                number = Integer.parseInt(sym);
+                currentToken = tokenBuilder.toString();
+                number = Integer.parseInt(currentToken);
                 return Token.number;
             } else if (Character.isLetter(inputSym)) {  // token is an identifier or keyword
                 handleIdentifier();
-                sym = tokenBuilder.toString();
-                if (Token.keywords.contains(sym)) {         // keyword
-                    return Token.tokenValueMap.get(sym);
+                currentToken = tokenBuilder.toString();
+                if (Token.keywords.contains(currentToken)) {         // keyword
+                    return Token.tokenValueMap.get(currentToken);
                 } else {                                    // identifier
-                    if (Token.inbuiltFunctions.contains(sym)) {
-                        id = stringToID.get(sym);
-                    } else if (stringToID.containsKey(sym)) {
-                        id = stringToID.get(sym);
+                    if (Token.inbuiltFunctions.contains(currentToken)) {
+                        id = inbuiltFunctions.get(currentToken);
                     } else {
-                        id = idCounter++;
-                        stringToID.put(sym, id);
-                        IDToString.put(id, sym);
+                        Variable v = ScopeManager.INSTANCE.findTokenInScope(currentToken);
+                        if (v != null) {
+                            id = v.getId();
+                        } else {
+                            id = idCounter++;
+                            ScopeManager.INSTANCE.createVar(id, currentToken);
+                        }
                     }
                     return Token.ident;
                 }
             } else {                                    // token is a symbol
                 handleSymbol();
-                sym = tokenBuilder.toString();
-                if (Token.comments.contains(sym)) {
+                currentToken = tokenBuilder.toString();
+                if (Token.comments.contains(currentToken)) {
                     skipLine();
                     return getSym();
                 }
-                if (Token.tokenValueMap.containsKey(sym)) {
-                    return Token.tokenValueMap.get(sym);
+                if (Token.tokenValueMap.containsKey(currentToken)) {
+                    return Token.tokenValueMap.get(currentToken);
                 } else {
-                    Error("Invalid symbol encountered : ".concat(sym));
+                    Error("Invalid symbol encountered : ".concat(currentToken));
                 }
             }
         } catch (IOException e) {

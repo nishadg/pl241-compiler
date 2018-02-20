@@ -1,9 +1,9 @@
 package Model;
 
-public class Address extends Result{
+public class Location extends Result{
     public int location;
 
-    public Address(int location) {
+    public Location(int location) {
         super(Kind.ADDR);
         this.location = location;
     }

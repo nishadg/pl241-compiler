@@ -37,7 +37,8 @@ public class BasicBlock {
         counter = 0;
     }
 
-    public void addInstruction(Instruction i) {
+    public Location addInstruction(Instruction i) {
         instructionList.add(i);
+        return new Location(i.number);
     }
 }

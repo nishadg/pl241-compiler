@@ -26,36 +26,35 @@ public enum Converter {
             Map.entry(Token.timesToken, Operation.muli)
     );
 
-    public void compute(int op, Result x, Result y) {
+    public Result compute(int op, Result x, Result y) {
         if (x.kind == Kind.CONST && y.kind == Kind.CONST) {
             Constant c = (Constant) x;
             x = c.compute(op, y);
         } else {
-            x = load(x);
+//            x = load(x);
             Instruction i;
             if (y.kind == Kind.CONST) {
                 i = new Instruction(tokenOpImmMap.get(op), x, y);
             } else {
-                y = load(y);
+//                y = load(y);
                 i = new Instruction(tokenOpMap.get(op), x, y);
             }
-            currentBlock.addInstruction(i);
+            x = currentBlock.addInstruction(i);
         }
+        return x;
     }
 
-    Register load(Result x) {
+    Location load(Result x) {
         if (x.kind == VAR) {
             Instruction i = new Instruction(Operation.load, x);
-            return new Register(i.getNumber());
+            return currentBlock.addInstruction(i);
         } else if (x.kind == CONST) {
             // TODO: Use R0 for 0 value
             Register r = new Register(0);
             Instruction i = new Instruction(Operation.addi, r, x);
-            currentBlock.addInstruction(i);
-            r.regNo = i.getNumber();
-            return r;
+            return currentBlock.addInstruction(i);
         } else {
-            return (Register) x;
+            return (Location) x;
         }
     }
 
@@ -63,40 +62,39 @@ public enum Converter {
         if (y.kind == CONST) {
             Register r = new Register(0);
             Instruction i = new Instruction(Operation.addi, r, y);
-            r.regNo = i.getNumber();
-            currentBlock.addInstruction(i);
-            currentBlock.addInstruction(new Instruction(Operation.move, r, x));
+            Location a = currentBlock.addInstruction(i);
+            currentBlock.addInstruction(new Instruction(Operation.move, a, x));
         } else {
             currentBlock.addInstruction(new Instruction(Operation.move, y, x));
         }
     }
 
     public Condition compare(int op, Result x, Result y) {
-        currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
-        return new Condition(op);
+        Location a = currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
+        return new Condition(op, a);
     }
 
-    public Address branchOnCondition(Condition x) {
+    public Location branchOnCondition(Condition x) {
         Instruction i = null;
-        Address y = new Address(0);
+        Location y = new Location(0);
         switch (x.operator) {
             case Token.eqlToken:
-                i = new Instruction(Operation.bne, x, y);
+                i = new Instruction(Operation.bne, x.compareLocation, y);
                 break;
             case Token.neqToken:
-                i = new Instruction(Operation.beq, x, y);
+                i = new Instruction(Operation.beq, x.compareLocation, y);
                 break;
             case Token.lssToken:
-                i = new Instruction(Operation.bge, x, y);
+                i = new Instruction(Operation.bge, x.compareLocation, y);
                 break;
             case Token.geqToken:
-                i = new Instruction(Operation.blt, x, y);
+                i = new Instruction(Operation.blt, x.compareLocation, y);
                 break;
             case Token.leqToken:
-                i = new Instruction(Operation.bgt, x, y);
+                i = new Instruction(Operation.bgt, x.compareLocation, y);
                 break;
             case Token.gtrToken:
-                i = new Instruction(Operation.ble, x, y);
+                i = new Instruction(Operation.ble, x.compareLocation, y);
                 break;
             default:
                 System.out.print("Invalid condition");
@@ -106,8 +104,8 @@ public enum Converter {
         return y;
     }
 
-    public Address branch() {
-        Address y = new Address(0);
+    public Location branch() {
+        Location y = new Location(0);
         currentBlock.addInstruction(new Instruction(Operation.bra, y));
         return y;
     }
@@ -132,7 +130,7 @@ public enum Converter {
         currentBlock.addInstruction(new Instruction(Operation.read));
     }
 
-    public void createFunction(String name) {
+    public void createFunctionBlock(String name) {
         CFG.INSTANCE.addGraph();
         currentBlock = BasicBlock.create();
         currentBlock.name = name;

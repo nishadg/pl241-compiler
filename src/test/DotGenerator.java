@@ -55,12 +55,10 @@ public class DotGenerator {
     }
 
     private String implode(String glue, List<Instruction> instructions) {
-        boolean first = true;
         StringBuilder str = new StringBuilder();
         for (Instruction i : instructions) {
-            if (!first) str.append(glue);
             str.append(i);
-            first = false;
+            str.append(glue);
         }
         return str.toString();
     }
