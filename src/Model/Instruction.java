@@ -18,6 +18,13 @@ public class Instruction {
     }
 
     int number;
+    boolean isPhiInstruction;
+    Variable phiVar;
+
+    public void setPhiInstruction(Variable phiVar){
+        isPhiInstruction = true;
+        this.phiVar = phiVar;
+    }
 
     public Instruction(Operation op, Result x, Result y) {
         this.op = op;
@@ -42,6 +49,9 @@ public class Instruction {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(number).append(": ");
         stringBuilder.append(op.name());
+        if(isPhiInstruction){
+            stringBuilder.append(" ").append(phiVar).append(" := ");
+        }
         if(x != null) stringBuilder.append(" ").append(x);
         if(y != null) stringBuilder.append(" ").append(y);
         return stringBuilder.toString();

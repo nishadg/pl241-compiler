@@ -33,7 +33,7 @@ public class Variable extends Result {
         for (Result i : indices) {
             indexString.append("[").append(i).append("]");
         }
-        indexString.append(assignmentLocation);
+        indexString.append("_").append(assignmentLocation.location);
         return name + indexString;
     }
 

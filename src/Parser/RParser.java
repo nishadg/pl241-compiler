@@ -164,22 +164,30 @@ public class RParser {
     }
 
     private void parseIfStatement() {
+        // Parse condition
         nextSym();
         Condition x = parseRelation();
-        parseToken("then");
         Value y = Converter.INSTANCE.branchOnCondition(x);
+        SSAManager.INSTANCE.pushToPhiStack();
+        boolean parentBranch = SSAManager.INSTANCE.leftBranch;
 
+        // Parse Left
+        parseToken("then");
         BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
         BasicBlock leftBlock = Converter.INSTANCE.createLeftBlockFor(parent);
         Converter.INSTANCE.setCurrentBlock(leftBlock);
+        SSAManager.INSTANCE.leftBranch = true;
         parseStatSequence();
         leftBlock = Converter.INSTANCE.getCurrentBlock();
+
+        // Check and parse right
         BasicBlock rightBlock;
         if (sym == Token.elseToken) {
             Value end = Converter.INSTANCE.branch();
             y.location = Instruction.getCounter();
             nextSym();
             rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
+            SSAManager.INSTANCE.leftBranch = false;
             Converter.INSTANCE.setCurrentBlock(rightBlock);
             parseStatSequence();
             rightBlock = Converter.INSTANCE.getCurrentBlock();
@@ -188,8 +196,12 @@ public class RParser {
             rightBlock = parent;
             y.location = Instruction.getCounter();
         }
+
+        // Join left and right
         BasicBlock joinBlock = Converter.INSTANCE.createIfJoinBlock(leftBlock, rightBlock);
         Converter.INSTANCE.setCurrentBlock(joinBlock);
+        SSAManager.INSTANCE.addPhiInstructionsToCurrentBlock();
+        SSAManager.INSTANCE.leftBranch = parentBranch; // restore to parent branch value (left/right)
         parseToken("fi");
     }
 
