@@ -9,7 +9,6 @@ import Model.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static Parser.Token.*;
 
@@ -149,12 +148,12 @@ public class RParser {
         Converter.INSTANCE.setCurrentBlock(joinBlock);
         int loopBackAddress = Instruction.getCounter();
         Condition x = parseRelation();
-        Location y = Converter.INSTANCE.branchOnCondition(x);
+        Value y = Converter.INSTANCE.branchOnCondition(x);
         Converter.INSTANCE.setCurrentBlock(leftBlock);
 
         parseToken("do");
         parseStatSequence();
-        Location end = Converter.INSTANCE.branch();
+        Value end = Converter.INSTANCE.branch();
         end.location = loopBackAddress;
         parseToken("od");
 
@@ -168,7 +167,8 @@ public class RParser {
         nextSym();
         Condition x = parseRelation();
         parseToken("then");
-        Location y = Converter.INSTANCE.branchOnCondition(x);
+        Value y = Converter.INSTANCE.branchOnCondition(x);
+
         BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
         BasicBlock leftBlock = Converter.INSTANCE.createLeftBlockFor(parent);
         Converter.INSTANCE.setCurrentBlock(leftBlock);
@@ -176,7 +176,7 @@ public class RParser {
         leftBlock = Converter.INSTANCE.getCurrentBlock();
         BasicBlock rightBlock;
         if (sym == Token.elseToken) {
-            Location end = Converter.INSTANCE.branch();
+            Value end = Converter.INSTANCE.branch();
             y.location = Instruction.getCounter();
             nextSym();
             rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
@@ -256,7 +256,7 @@ public class RParser {
         Converter.INSTANCE.input();
         parseToken("(");
         parseToken(")");
-        return new Location(Instruction.getCounter());
+        return new Value(Instruction.getCounter());
     }
 
     private void parseAssignment() {

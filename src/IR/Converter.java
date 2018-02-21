@@ -44,7 +44,7 @@ public enum Converter {
         return x;
     }
 
-    Location load(Result x) {
+    Value load(Result x) {
         if (x.kind == VAR) {
             Instruction i = new Instruction(Operation.load, x);
             return currentBlock.addInstruction(i);
@@ -54,15 +54,15 @@ public enum Converter {
             Instruction i = new Instruction(Operation.addi, r, x);
             return currentBlock.addInstruction(i);
         } else {
-            return (Location) x;
+            return (Value) x;
         }
     }
 
-    public Location assign(Result x, Result y) { // let x <= y;
+    public Value assign(Result x, Result y) { // let x <= y;
 //        if (y.kind == CONST) {
 //            Register r = new Register(0);
 //            Instruction i = new Instruction(Operation.addi, r, y);
-//            Location a = currentBlock.addInstruction(i);
+//            Value a = currentBlock.addInstruction(i);
 //            return currentBlock.addInstruction(new Instruction(Operation.move, a, x));
 //        } else {
             return currentBlock.addInstruction(new Instruction(Operation.move, y, x));
@@ -70,13 +70,13 @@ public enum Converter {
     }
 
     public Condition compare(int op, Result x, Result y) {
-        Location a = currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
+        Value a = currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
         return new Condition(op, a);
     }
 
-    public Location branchOnCondition(Condition x) {
+    public Value branchOnCondition(Condition x) {
         Instruction i = null;
-        Location y = new Location(0);
+        Value y = new Value(0);
         switch (x.operator) {
             case Token.eqlToken:
                 i = new Instruction(Operation.bne, x.compareLocation, y);
@@ -104,8 +104,8 @@ public enum Converter {
         return y;
     }
 
-    public Location branch() {
-        Location y = new Location(0);
+    public Value branch() {
+        Value y = new Value(0);
         currentBlock.addInstruction(new Instruction(Operation.bra, y));
         return y;
     }
@@ -194,7 +194,7 @@ public enum Converter {
         return child;
     }
 
-    public Location callFunction(Variable functionName) {
+    public Value callFunction(Variable functionName) {
         return currentBlock.addInstruction(new Instruction(Operation.call, functionName));
     }
 

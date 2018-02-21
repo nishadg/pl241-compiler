@@ -1,7 +1,6 @@
 package Model;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 public class Variable extends Result {
@@ -10,7 +9,7 @@ public class Variable extends Result {
 
     public List<Result> indices;
     public List<Integer> dimensions;
-    public Location assignmentLocation;
+    public Value assignmentLocation;
 
     public int getId() {
         return id;
