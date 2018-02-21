@@ -11,6 +11,7 @@ public class RScanner { // encapsulates streams of tokens
 
     private RFileReader fileReader;
     private StringBuilder tokenBuilder;
+    boolean declareMode; // when true, all identifiers will be added to scope without check for existing.
 
     public String getCurrentToken() {
         return currentToken;
@@ -63,7 +64,10 @@ public class RScanner { // encapsulates streams of tokens
                     if (Token.inbuiltFunctions.contains(currentToken)) {
                         id = inbuiltFunctions.get(currentToken);
                     } else {
-                        Variable v = ScopeManager.INSTANCE.findTokenInScope(currentToken);
+                        Variable v = null;
+                        if(!declareMode){
+                            v = ScopeManager.INSTANCE.findTokenInScope(currentToken);
+                        }
                         if (v != null) {
                             id = v.getId();
                         } else {

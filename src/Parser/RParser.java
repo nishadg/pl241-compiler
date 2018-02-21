@@ -2,6 +2,7 @@ package Parser;
 
 import IR.CFG;
 import IR.Converter;
+import IR.SSAManager;
 import IR.ScopeManager;
 import Model.*;
 
@@ -59,6 +60,7 @@ public class RParser {
     }
 
     private void parseFuncDecl() {
+        rScanner.declareMode = true;
         while (sym == Token.funcToken || sym == Token.procToken) {
             //Function name
             nextSym();
@@ -82,6 +84,7 @@ public class RParser {
             parseToken(";");
 
             //Function body
+            rScanner.declareMode = false;
             parseFuncBody();
             parseToken(";");
             Converter.INSTANCE.backToMain();
@@ -136,7 +139,10 @@ public class RParser {
 
     private void parseWhileStatement() {
         nextSym();
-        BasicBlock parent = Converter.INSTANCE.createChildOfCurrentBlock();
+        BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
+        if(parent.getInstructionList().size() != 0){
+            parent = Converter.INSTANCE.createChildOfCurrentBlock();
+        }
         BasicBlock leftBlock = Converter.INSTANCE.createLeftBlockFor(parent);
         BasicBlock rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
         BasicBlock joinBlock = Converter.INSTANCE.createWhileJoinBlock();
@@ -255,10 +261,11 @@ public class RParser {
 
     private void parseAssignment() {
         nextSym();
-        Result x = parseDesignator();
+        Variable x = parseDesignator();
         parseToken("<-");
         Result y = parseExpression();
-        Converter.INSTANCE.assign(x, y);
+        x.assignmentLocation = Converter.INSTANCE.assign(x, y);
+        SSAManager.INSTANCE.addValueInstance(x);
     }
 
     private Result parseExpression() {
@@ -308,9 +315,9 @@ public class RParser {
         return f;
     }
 
-    private Result parseDesignator() {
+    private Variable parseDesignator() {
         checkIdent();
-        Variable var = Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(rScanner.getCurrentToken())).copy();
+        Variable var = SSAManager.INSTANCE.getCurrentValueInstance(rScanner.getCurrentToken());
         nextSym();
         while (sym == Token.openbracketToken) {
             nextSym();
@@ -324,6 +331,7 @@ public class RParser {
 
 
     private void parseVarDecl() {
+        rScanner.declareMode = true;
         while (sym == Token.arrToken || sym == Token.varToken) {
             List<Integer> dimensions = parseTypeDecl();
             checkIdent();
@@ -338,6 +346,7 @@ public class RParser {
             }
             parseToken(";");
         }
+        rScanner.declareMode = false;
     }
 
     private List<Integer> parseTypeDecl() {

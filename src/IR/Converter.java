@@ -33,12 +33,12 @@ public enum Converter {
         } else {
 //            x = load(x);
             Instruction i;
-            if (y.kind == Kind.CONST) {
-                i = new Instruction(tokenOpImmMap.get(op), x, y);
-            } else {
+//            if (y.kind == Kind.CONST) {
+//                i = new Instruction(tokenOpImmMap.get(op), x, y);
+//            } else {
 //                y = load(y);
                 i = new Instruction(tokenOpMap.get(op), x, y);
-            }
+//            }
             x = currentBlock.addInstruction(i);
         }
         return x;
@@ -58,15 +58,15 @@ public enum Converter {
         }
     }
 
-    public void assign(Result x, Result y) { // let x <= y;
-        if (y.kind == CONST) {
-            Register r = new Register(0);
-            Instruction i = new Instruction(Operation.addi, r, y);
-            Location a = currentBlock.addInstruction(i);
-            currentBlock.addInstruction(new Instruction(Operation.move, a, x));
-        } else {
-            currentBlock.addInstruction(new Instruction(Operation.move, y, x));
-        }
+    public Location assign(Result x, Result y) { // let x <= y;
+//        if (y.kind == CONST) {
+//            Register r = new Register(0);
+//            Instruction i = new Instruction(Operation.addi, r, y);
+//            Location a = currentBlock.addInstruction(i);
+//            return currentBlock.addInstruction(new Instruction(Operation.move, a, x));
+//        } else {
+            return currentBlock.addInstruction(new Instruction(Operation.move, y, x));
+//        }
     }
 
     public Condition compare(int op, Result x, Result y) {

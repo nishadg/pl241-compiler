@@ -10,6 +10,7 @@ public class Variable extends Result {
 
     public List<Result> indices;
     public List<Integer> dimensions;
+    public Location assignmentLocation;
 
     public int getId() {
         return id;
@@ -19,7 +20,7 @@ public class Variable extends Result {
         return name;
     }
 
-    public Variable(int id, String name) {
+    private Variable(int id, String name) {
         super(Kind.VAR);
         this.id = id;
         this.name = name;
@@ -33,6 +34,7 @@ public class Variable extends Result {
         for (Result i : indices) {
             indexString.append("[").append(i).append("]");
         }
+        indexString.append(assignmentLocation);
         return name + indexString;
     }
 
@@ -48,6 +50,13 @@ public class Variable extends Result {
     public Variable copy() {
         Variable v = new Variable(this.getId(), this.name);
         v.dimensions = new ArrayList<>(this.dimensions);
+        v.assignmentLocation = this.assignmentLocation;
+        return v;
+    }
+
+    public static Variable create(int id, String name){
+        Variable v = new Variable(id, name);
+        v.dimensions = new ArrayList<>();
         return v;
     }
 }

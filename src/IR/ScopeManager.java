@@ -48,7 +48,7 @@ public enum ScopeManager {
     }
 
     public void createVar(int id, String name) {
-        Variable v = new Variable(id, name);
+        Variable v = Variable.create(id, name);
         addVarToScope(v);
     }
 

@@ -1,5 +1,7 @@
 package Model;
 
+import IR.Converter;
+
 public class Location extends Result{
     public int location;
 
@@ -12,5 +14,4 @@ public class Location extends Result{
     public String toString() {
         return "(" + location + ")";
     }
-
 }
