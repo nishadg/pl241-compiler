@@ -1,6 +1,7 @@
 package IR;
 
 import Model.BasicBlock;
+import Model.Instruction;
 import Model.Variable;
 
 import java.util.*;
@@ -23,13 +24,12 @@ public class SSAManager {
         // Create def in def-use chain
         varDefUseChain.put(v, new ArrayList<>());
 
-        // Add value instance to var-instance map
-        varIDInstanceMap.put(v.getId(), v);
 
-        // Create phi instruction if in a branch
-        Phi p = new Phi();
-        p.old = varIDInstanceMap.getOrDefault(v.getId(), null);
         if (!phiStack.empty()) { // we are in one of the branches
+            //store old value instance in phi for later use.
+            Phi p = new Phi();
+            p.old = varIDInstanceMap.getOrDefault(v.getId(), null);
+
             //get phi for current variable
             List<Phi> phiInstructions = phiStack.peek();
             List<Phi> phisForV = phiInstructions.stream().filter(phi -> phi.old.getId() == v.getId()).collect(Collectors.toList());
@@ -47,6 +47,9 @@ public class SSAManager {
                 phiForV.right = v;
             }
         }
+
+        // Add value instance to var-instance map
+        varIDInstanceMap.put(v.getId(), v);
     }
 
     public Variable getCurrentValueInstance(String varName, boolean isDef) {
@@ -93,6 +96,5 @@ public class SSAManager {
                 use.assignmentLocation = newVar.assignmentLocation;
             }
         }
-
     }
 }

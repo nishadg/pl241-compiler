@@ -5,7 +5,7 @@ import IR.CFG;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BasicBlock {
+public class BasicBlock extends Result{
     static int counter = 0;
 
     public int index;
@@ -22,6 +22,7 @@ public class BasicBlock {
     public String name; // name of the function, set when creating a new function block.
 
     private BasicBlock() {
+        super(Kind.ADDR);
         index = counter++;
     }
 
@@ -31,18 +32,25 @@ public class BasicBlock {
         return b;
     }
 
-
-
     public static void resetCounter(){
         counter = 0;
     }
 
-    public Value addInstruction(Instruction i) {
+    public Instruction addInstruction(Instruction i) {
         instructionList.add(i);
-        return new Value(i.number);
+        return i;
     }
-    public Value addInstructionToStart(Instruction i) {
+    public Instruction addInstructionToStart(Instruction i) {
         instructionList.add(0,i);
-        return new Value(i.number);
+        return i;
+    }
+
+    public Instruction getLastInstruction() {
+        return instructionList.get(instructionList.size() - 1);
+    }
+
+    @Override
+    public String toString() {
+        return "[" + index + "]";
     }
 }

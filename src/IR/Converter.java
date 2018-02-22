@@ -43,7 +43,7 @@ public class Converter {
         return x;
     }
 
-    Value load(Result x) {
+    Result load(Result x) {
         if (x.kind == VAR) {
             Instruction i = new Instruction(Operation.load, x);
             return currentBlock.addInstruction(i);
@@ -53,11 +53,11 @@ public class Converter {
             Instruction i = new Instruction(Operation.addi, r, x);
             return currentBlock.addInstruction(i);
         } else {
-            return (Value) x;
+            return x;
         }
     }
 
-    public Value assign(Result x, Result y) { // let x <= y;
+    public Instruction assign(Result x, Result y) { // let x <= y;
 //        if (y.kind == CONST) {
 //            Register r = new Register(0);
 //            Instruction i = new Instruction(Operation.addi, r, y);
@@ -68,57 +68,52 @@ public class Converter {
 //        }
     }
 
-    public Value phi(Variable old, Variable left, Variable right){
+    public Instruction phi(Variable old, Variable left, Variable right){
         Instruction i = new Instruction(Operation.phi, left, right);
         i.setPhiInstruction(old);
         return currentBlock.addInstruction(i);
     }
 
-    public Value whilePhi(Variable old, Variable left, Variable right){
+    public Instruction whilePhi(Variable old, Variable left, Variable right){
         Instruction i = new Instruction(Operation.phi, left, right);
         i.setPhiInstruction(old);
         return currentBlock.addInstructionToStart(i);
     }
 
     public Condition compare(int op, Result x, Result y) {
-        Value a = currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
+        Instruction a = currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
         return new Condition(op, a);
     }
 
-    public Value branchOnCondition(Condition x) {
+    public void branchOnCondition(Condition x) {
         Instruction i = null;
-        Value y = new Value(0);
         switch (x.operator) {
             case Token.eqlToken:
-                i = new Instruction(Operation.bne, x.compareLocation, y);
+                i = new Instruction(Operation.bne, x.compareLocation);
                 break;
             case Token.neqToken:
-                i = new Instruction(Operation.beq, x.compareLocation, y);
+                i = new Instruction(Operation.beq, x.compareLocation);
                 break;
             case Token.lssToken:
-                i = new Instruction(Operation.bge, x.compareLocation, y);
+                i = new Instruction(Operation.bge, x.compareLocation);
                 break;
             case Token.geqToken:
-                i = new Instruction(Operation.blt, x.compareLocation, y);
+                i = new Instruction(Operation.blt, x.compareLocation);
                 break;
             case Token.leqToken:
-                i = new Instruction(Operation.bgt, x.compareLocation, y);
+                i = new Instruction(Operation.bgt, x.compareLocation);
                 break;
             case Token.gtrToken:
-                i = new Instruction(Operation.ble, x.compareLocation, y);
+                i = new Instruction(Operation.ble, x.compareLocation);
                 break;
             default:
                 System.out.print("Invalid condition");
         }
         currentBlock.addInstruction(i);
-
-        return y;
     }
 
-    public Value branch() {
-        Value y = new Value(0);
-        currentBlock.addInstruction(new Instruction(Operation.bra, y));
-        return y;
+    public void branch() {
+        currentBlock.addInstruction(new Instruction(Operation.bra));
     }
 
     public void end() {
@@ -137,8 +132,8 @@ public class Converter {
         currentBlock.addInstruction(new Instruction(Operation.write, x));
     }
 
-    public void input() {
-        currentBlock.addInstruction(new Instruction(Operation.read));
+    public Instruction input() {
+        return currentBlock.addInstruction(new Instruction(Operation.read));
     }
 
     public void createFunctionBlock(String name) {
@@ -205,7 +200,7 @@ public class Converter {
         return child;
     }
 
-    public Value callFunction(Variable functionName) {
+    public Instruction callFunction(Variable functionName) {
         return currentBlock.addInstruction(new Instruction(Operation.call, functionName));
     }
 

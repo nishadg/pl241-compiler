@@ -20,7 +20,7 @@ public class DotGenerator {
 
     private void generateGraph(ArrayList<BasicBlock> graph, String name) throws IOException {
         for (BasicBlock block : graph) {
-            file.writeBytes(block.index + " [ label = \"" + getInstructionsString(block) + "\" shape = \"box\"]");
+            file.writeBytes(block.index + " [ label = \"block " + block.index + "\\l" + getInstructionsString(block) + "\" shape = \"box\"]");
             if (block.leftBlock != null)
                 file.writeBytes(block.index + " -> " + block.leftBlock.index + "\n");
             if (block.rightBlock != null)
@@ -57,7 +57,7 @@ public class DotGenerator {
     private String implode(String glue, List<Instruction> instructions) {
         StringBuilder str = new StringBuilder();
         for (Instruction i : instructions) {
-            str.append(i);
+            str.append(i.outputString());
             str.append(glue);
         }
         return str.toString();

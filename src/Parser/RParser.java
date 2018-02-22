@@ -69,6 +69,9 @@ public class RParser {
             nextSym();
             checkIdent();
             String functionName = rScanner.getCurrentToken();
+            Variable function = ScopeManager.INSTANCE.findTokenInScope(functionName);
+            assert function != null;
+            function.isFunction = true;
             converter.createFunctionBlock(functionName);
             ScopeManager.INSTANCE.createScope(functionName);
 
@@ -152,44 +155,49 @@ public class RParser {
         BasicBlock rightBlock = converter.createRightBlockFor(parent);
         BasicBlock joinBlock = converter.createWhileJoinBlock();
         converter.setCurrentBlock(joinBlock);
-        int loopBackAddress = Instruction.getCounter();
         ssaManager.pushToPhiStack();
         boolean parentBranch = ssaManager.leftBranch;
 
         // Parse Condition
         Condition x = parseRelation();
-        Value y = converter.branchOnCondition(x);
+        converter.branchOnCondition(x);
         converter.setCurrentBlock(leftBlock);
 
         // Parse loop
         ssaManager.leftBranch = false;
         parseToken("do");
         parseStatSequence();
-        Value end = converter.branch();
-        end.location = loopBackAddress;
+        converter.branch();
 
         // Finish loop
         parseToken("od");
-        y.location = Instruction.getCounter();
         leftBlock = converter.getCurrentBlock();
         converter.fixupWhileJoinBlock(leftBlock, joinBlock);
         ssaManager.addPhiForWhile(converter, joinBlock);
+
+        // fix branch addresses
+        joinBlock.leftBlock.getLastInstruction().setX(joinBlock);
+        joinBlock.getLastInstruction().setY(joinBlock.rightBlock);
+
+        // proceed
         converter.setCurrentBlock(rightBlock);
         ssaManager.leftBranch = parentBranch;
     }
 
     private void parseIfStatement() {
+        BasicBlock parent = converter.getCurrentBlock();
+        BasicBlock leftBlock = converter.createLeftBlockFor(parent);
+        BasicBlock joinBlock;
+
         // Parse condition
         nextSym();
         Condition x = parseRelation();
-        Value y = converter.branchOnCondition(x);
+        converter.branchOnCondition(x);
         ssaManager.pushToPhiStack();
         boolean parentBranch = ssaManager.leftBranch;
 
         // Parse Left
         parseToken("then");
-        BasicBlock parent = converter.getCurrentBlock();
-        BasicBlock leftBlock = converter.createLeftBlockFor(parent);
         converter.setCurrentBlock(leftBlock);
         ssaManager.leftBranch = true;
         parseStatSequence();
@@ -198,24 +206,36 @@ public class RParser {
         // Check and parse right
         BasicBlock rightBlock;
         if (sym == Token.elseToken) {
-            Value end = converter.branch();
-            y.location = Instruction.getCounter();
+            converter.branch();
             nextSym();
             rightBlock = converter.createRightBlockFor(parent);
+
+            // fix branch for parent
+            parent.getLastInstruction().setY(rightBlock);
+
+            // parse else (right) block
             ssaManager.leftBranch = false;
             converter.setCurrentBlock(rightBlock);
             parseStatSequence();
-            rightBlock = converter.getCurrentBlock();
-            end.location = Instruction.getCounter();
+
+            // Join left and right
+            joinBlock = converter.createIfJoinBlock(leftBlock, converter.getCurrentBlock());
+
+            // fix branch for left block
+            leftBlock.getLastInstruction().setX(joinBlock);
         } else {
-            rightBlock = parent;
-            y.location = Instruction.getCounter();
+            // Join left and parent
+            joinBlock = converter.createIfJoinBlock(leftBlock, parent);
+
+            // fix branch for parent
+            parent.getLastInstruction().setY(joinBlock);
         }
 
-        // Join left and right
-        BasicBlock joinBlock = converter.createIfJoinBlock(leftBlock, rightBlock);
+
         converter.setCurrentBlock(joinBlock);
         ssaManager.addPhiInstructionsForIf(converter);
+
+        // proceed
         ssaManager.leftBranch = parentBranch; // restore to parent branch value (left/right)
         parseToken("fi");
     }
@@ -280,10 +300,9 @@ public class RParser {
     }
 
     private Result parseInputNum() {
-        converter.input();
         parseToken("(");
         parseToken(")");
-        return new Value(Instruction.getCounter());
+        return converter.input();
     }
 
     private void parseAssignment() {

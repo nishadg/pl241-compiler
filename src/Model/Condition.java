@@ -2,9 +2,9 @@ package Model;
 
 public class Condition extends Result{
     public int operator;
-    public Value compareLocation;
+    public Instruction compareLocation;
 
-    public Condition(int operator, Value compareLocation) {
+    public Condition(int operator, Instruction compareLocation) {
         super(Kind.COND);
         this.operator = operator;
         this.compareLocation = compareLocation;

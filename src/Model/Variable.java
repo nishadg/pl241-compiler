@@ -10,7 +10,8 @@ public class Variable extends Result {
 
     public List<Result> indices;
     public List<Integer> dimensions;
-    public Value assignmentLocation;
+    public Instruction assignmentLocation;
+    public boolean isFunction;
 
     public int getId() {
         return id;
@@ -34,7 +35,14 @@ public class Variable extends Result {
         for (Result i : indices) {
             indexString.append("[").append(i).append("]");
         }
-        indexString.append("_").append(assignmentLocation.location);
+        if (!isFunction) {
+            indexString.append("_");
+            if (assignmentLocation == null) {
+                indexString.append("Unassigned");
+            } else {
+                indexString.append(assignmentLocation.number);
+            }
+        }
         return name + indexString;
     }
 
@@ -59,7 +67,7 @@ public class Variable extends Result {
         return v;
     }
 
-    public static Variable create(int id, String name){
+    public static Variable create(int id, String name) {
         Variable v = new Variable(id, name);
         v.dimensions = new ArrayList<>();
         return v;
