@@ -2,7 +2,7 @@ main
 var f,g;
 {
     let n <- 10;
-    let f <- 1;
+    let f <- n + 1;
     while n > 0 do
         let f <- f * n;
         let n <- n - 1

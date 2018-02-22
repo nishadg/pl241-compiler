@@ -83,17 +83,18 @@ public class SSAManager {
         }
     }
 
-    public void addPhiForWhile(Converter converter, BasicBlock joinBlock){
+    public void addPhiForWhile(Converter converter, BasicBlock joinBlock) {
         converter.setCurrentBlock(joinBlock);
+        int resetLocation = joinBlock.getInstructionList().get(0).number;
         List<Phi> phiInstructions = phiStack.pop();
-        for (Phi phi: phiInstructions){
+        for (Phi phi : phiInstructions) {
             Variable newVar = phi.old.copy();
             List<Variable> useChain = varDefUseChain.get(newVar);
             newVar.assignmentLocation = converter.whilePhi(newVar, phi.old, phi.right);
             addValueInstance(newVar);
-            for(Variable use: useChain){
-                //TODO: change only the uses after the join.
-                use.assignmentLocation = newVar.assignmentLocation;
+            for (Variable use : useChain) {
+                if (use.useLocation.number >= resetLocation)
+                    use.assignmentLocation = newVar.assignmentLocation;
             }
         }
     }

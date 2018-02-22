@@ -31,25 +31,28 @@ public class Instruction extends Result{
         this.phiVar = phiVar;
     }
 
+    public Instruction(Operation op) {
+        this(op, null, null);
+    }
+
     public Instruction(Operation op, Result x, Result y) {
         super(Kind.ADDR);
         this.op = op;
         this.x = x;
         this.y = y;
         number = counter++;
+
+        // set use instruction for variable
+        if(x!= null && x.kind == Kind.VAR){
+            ((Variable)x).useLocation = this;
+        }
+        if(y!= null && y.kind == Kind.VAR){
+            ((Variable)y).useLocation = this;
+        }
     }
 
     public Instruction(Operation op, Result x) {
-        super(Kind.ADDR);
-        this.op = op;
-        this.x = x;
-        number = counter++;
-    }
-
-    public Instruction(Operation op) {
-        super(Kind.ADDR);
-        this.op = op;
-        number = counter++;
+        this(op, x, null);
     }
 
     @Override
