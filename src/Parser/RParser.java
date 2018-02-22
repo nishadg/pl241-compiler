@@ -162,6 +162,7 @@ public class RParser {
         converter.setCurrentBlock(leftBlock);
 
         // Parse loop
+        ssaManager.leftBranch = false;
         parseToken("do");
         parseStatSequence();
         Value end = converter.branch();
@@ -172,8 +173,7 @@ public class RParser {
         y.location = Instruction.getCounter();
         leftBlock = converter.getCurrentBlock();
         converter.fixupWhileJoinBlock(leftBlock, joinBlock);
-        converter.setCurrentBlock(joinBlock);
-        ssaManager.addPhiInstructionsToCurrentBlock(converter);
+        ssaManager.addPhiForWhile(converter, joinBlock);
         converter.setCurrentBlock(rightBlock);
         ssaManager.leftBranch = parentBranch;
     }
@@ -215,7 +215,7 @@ public class RParser {
         // Join left and right
         BasicBlock joinBlock = converter.createIfJoinBlock(leftBlock, rightBlock);
         converter.setCurrentBlock(joinBlock);
-        ssaManager.addPhiInstructionsToCurrentBlock(converter);
+        ssaManager.addPhiInstructionsForIf(converter);
         ssaManager.leftBranch = parentBranch; // restore to parent branch value (left/right)
         parseToken("fi");
     }

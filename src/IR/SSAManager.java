@@ -1,5 +1,6 @@
 package IR;
 
+import Model.BasicBlock;
 import Model.Variable;
 
 import java.util.*;
@@ -54,7 +55,9 @@ public class SSAManager {
             v = varIDInstanceMap.get(v.getId()).copy();
 
             // add use to def-use chain
-            if (!isDef) varDefUseChain.get(v).add(v);
+            if (!isDef) {
+                varDefUseChain.get(v).add(v);
+            }
         }
         return v;
     }
@@ -63,7 +66,7 @@ public class SSAManager {
         phiStack.push(new ArrayList<>());
     }
 
-    public void addPhiInstructionsToCurrentBlock(Converter converter) {
+    public void addPhiInstructionsForIf(Converter converter) {
         List<Phi> phiInstructions = phiStack.pop();
         for (Phi phi : phiInstructions) {
             if (phi.left == null) {
@@ -75,5 +78,21 @@ public class SSAManager {
             newVar.assignmentLocation = converter.phi(newVar, phi.left, phi.right);
             addValueInstance(newVar);
         }
+    }
+
+    public void addPhiForWhile(Converter converter, BasicBlock joinBlock){
+        converter.setCurrentBlock(joinBlock);
+        List<Phi> phiInstructions = phiStack.pop();
+        for (Phi phi: phiInstructions){
+            Variable newVar = phi.old.copy();
+            List<Variable> useChain = varDefUseChain.get(newVar);
+            newVar.assignmentLocation = converter.whilePhi(newVar, phi.old, phi.right);
+            addValueInstance(newVar);
+            for(Variable use: useChain){
+                //TODO: change only the uses after the join.
+                use.assignmentLocation = newVar.assignmentLocation;
+            }
+        }
+
     }
 }

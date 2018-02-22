@@ -41,4 +41,8 @@ public class BasicBlock {
         instructionList.add(i);
         return new Value(i.number);
     }
+    public Value addInstructionToStart(Instruction i) {
+        instructionList.add(0,i);
+        return new Value(i.number);
+    }
 }

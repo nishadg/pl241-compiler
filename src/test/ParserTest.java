@@ -15,7 +15,7 @@ public class ParserTest {
 //        readFile();
 //        scanFile();
 //        parseAllFiles();
-        parseFile("ssa.txt");
+        parseFile("ssawhile.txt");
     }
 
     private static void parseFile(String fileName) {

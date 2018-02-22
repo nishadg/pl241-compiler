@@ -74,6 +74,12 @@ public class Converter {
         return currentBlock.addInstruction(i);
     }
 
+    public Value whilePhi(Variable old, Variable left, Variable right){
+        Instruction i = new Instruction(Operation.phi, left, right);
+        i.setPhiInstruction(old);
+        return currentBlock.addInstructionToStart(i);
+    }
+
     public Condition compare(int op, Result x, Result y) {
         Value a = currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
         return new Condition(op, a);
