@@ -44,10 +44,10 @@ public class Instruction extends Result{
 
         // set use instruction for variable
         if(x!= null && x.kind == Kind.VAR){
-            ((Variable)x).useLocation = this;
+            ((Variable)x).useLocation = number;
         }
         if(y!= null && y.kind == Kind.VAR){
-            ((Variable)y).useLocation = this;
+            ((Variable)y).useLocation = number;
         }
     }
 

@@ -20,7 +20,8 @@ public class BasicBlock extends Result {
     public List<BasicBlock> parents = new ArrayList<>();
     public BasicBlock leftBlock;
     public BasicBlock rightBlock;
-    public boolean isJoin = false;
+    public boolean isIfJoin = false;
+    public boolean isWhileJoin = false;
     public String name; // name of the function, set when creating a new function block.
 
     private BasicBlock() {
@@ -58,10 +59,10 @@ public class BasicBlock extends Result {
     }
 
     public Variable getOldAssignmentFromParent(Variable v) {
-        if (isJoin) {
+        if (parents.isEmpty()) {
+            return v;
+        } else if (isIfJoin) {
             return parents.get(0).parents.get(0).getOldAssignmentFromParent(v);
-        } else if (parents.isEmpty()){
-            return null;
         } else {
             List<Variable> searchList = parents.get(0).assignedVariables;
             for (int i = searchList.size() - 1; i >= 0; i--) {

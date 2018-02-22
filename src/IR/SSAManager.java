@@ -40,7 +40,6 @@ public class SSAManager {
             Phi phiForV;
             if (phisForV.isEmpty()) {  // no phi found. add phi to be added to join later.
                 phiForV = p;
-                if (phiForV.old == null) phiForV.old = v.copy();
                 phiInstructions.add(phiForV);
             } else {
                 phiForV = phisForV.get(0);
@@ -93,13 +92,21 @@ public class SSAManager {
         int resetLocation = joinBlock.getInstructionList().get(0).number;
         List<Phi> phiInstructions = phiStack.pop();
         for (Phi phi : phiInstructions) {
+            phi.old = joinBlock.getOldAssignmentFromParent(phi.old);
             Variable newVar = phi.old.copy();
             List<Variable> useChain = varDefUseChain.get(newVar);
             newVar.assignmentLocation = converter.whilePhi(newVar, phi.old, phi.right);
             addValueInstance(newVar, converter.getCurrentBlock());
-            for (Variable use : useChain) {
-                if (use.useLocation != null && use.useLocation.number >= resetLocation)
-                    use.assignmentLocation = newVar.assignmentLocation;
+
+            // update uses with new value instance
+            updateUses(newVar, useChain, resetLocation);
+        }
+    }
+
+    private void updateUses(Variable newVar, List<Variable> useChain, int resetLocation) {
+        for (Variable use : useChain) {
+            if (use.useLocation >= resetLocation){
+                use.assignmentLocation = newVar.assignmentLocation;
             }
         }
     }

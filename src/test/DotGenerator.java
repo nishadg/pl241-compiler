@@ -20,11 +20,17 @@ public class DotGenerator {
 
     private void generateGraph(ArrayList<BasicBlock> graph, String name) throws IOException {
         for (BasicBlock block : graph) {
-            file.writeBytes(block.index + " [ label = \"block " + block.index + "\\l" + getInstructionsString(block) + "\" shape = \"box\"]");
+            String blockLabel = "";
+            if (block.isWhileJoin) blockLabel = "While ";
+            if (block.isIfJoin) blockLabel = "If ";
+            file.writeBytes(block.index + " [ label = \"" + blockLabel + "Block " + block.index + "\\l" + getInstructionsString(block) + "\" shape = \"box\"]");
             if (block.leftBlock != null)
                 file.writeBytes(block.index + " -> " + block.leftBlock.index + "\n");
             if (block.rightBlock != null)
                 file.writeBytes(block.index + " -> " + block.rightBlock.index + "\n");
+//            for (BasicBlock parent : block.parents) {
+//                file.writeBytes(block.index + " -> " + parent.index + "[color = red]\n");
+//            }
         }
     }
 

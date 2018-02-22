@@ -11,7 +11,7 @@ public class Variable extends Result {
     public List<Result> indices;
     public List<Integer> dimensions;
     public Instruction assignmentLocation;
-    public Instruction useLocation;
+    public int useLocation;
     public boolean isFunction;
 
     public int getId() {

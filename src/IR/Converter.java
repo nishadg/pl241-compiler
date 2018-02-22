@@ -153,7 +153,6 @@ public class Converter {
         return left;
     }
 
-
     public BasicBlock createRightBlockFor(BasicBlock parent) {
         BasicBlock right = BasicBlock.create();
         right.parents.add(parent);
@@ -163,7 +162,7 @@ public class Converter {
 
     public BasicBlock createIfJoinBlock(BasicBlock leftBlock, BasicBlock rightBlock) {
         BasicBlock joinBlock = BasicBlock.create();
-        joinBlock.isJoin = true;
+        joinBlock.isIfJoin = true;
         leftBlock.leftBlock = joinBlock;
         if (rightBlock.leftBlock == null) // check else/fallthrough
             rightBlock.leftBlock = joinBlock;
@@ -184,7 +183,7 @@ public class Converter {
 
     public BasicBlock createWhileJoinBlock() {
         BasicBlock joinBlock = currentBlock;
-        joinBlock.isJoin = true;
+        joinBlock.isWhileJoin = true;
         return joinBlock;
     }
 
