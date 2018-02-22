@@ -15,7 +15,7 @@ public class ParserTest {
 //        readFile();
 //        scanFile();
 //        parseAllFiles();
-        parseFile("ssawhile.txt");
+        parseFile("test009.txt");
     }
 
     private static void parseFile(String fileName) {
@@ -33,10 +33,13 @@ public class ParserTest {
             File[] files = new File(PATH).listFiles();
             for (File file : files) {
                 if (file.isFile()) {
-                    System.out.println("Parsing ".concat(file.getName()));
-                    RParser p = new RParser(PATH.concat(file.getName()));
-                    p.parse();
-
+//                    try {
+                        System.out.println("\nParsing ".concat(file.getName()));
+                        RParser p = new RParser(PATH.concat(file.getName()));
+                        p.parse();
+//                    }catch (Exception e){
+//                        System.out.println("FAILED:  ".concat(file.getName()));
+//                    }
                 }
             }
         } catch (IOException e) {

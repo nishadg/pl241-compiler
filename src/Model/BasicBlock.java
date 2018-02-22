@@ -5,7 +5,7 @@ import IR.CFG;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BasicBlock extends Result{
+public class BasicBlock extends Result {
     static int counter = 0;
 
     public int index;
@@ -13,6 +13,8 @@ public class BasicBlock extends Result{
     public List<Instruction> getInstructionList() {
         return instructionList;
     }
+
+    public List<Variable> assignedVariables = new ArrayList<>();
 
     List<Instruction> instructionList = new ArrayList<>();
     public List<BasicBlock> parents = new ArrayList<>();
@@ -26,13 +28,13 @@ public class BasicBlock extends Result{
         index = counter++;
     }
 
-    public static BasicBlock create(){
+    public static BasicBlock create() {
         BasicBlock b = new BasicBlock();
         CFG.INSTANCE.addToCurrentGraph(b);
         return b;
     }
 
-    public static void resetCounter(){
+    public static void resetCounter() {
         counter = 0;
     }
 
@@ -40,8 +42,9 @@ public class BasicBlock extends Result{
         instructionList.add(i);
         return i;
     }
+
     public Instruction addInstructionToStart(Instruction i) {
-        instructionList.add(0,i);
+        instructionList.add(0, i);
         return i;
     }
 
@@ -52,5 +55,22 @@ public class BasicBlock extends Result{
     @Override
     public String toString() {
         return "[" + index + "]";
+    }
+
+    public Variable getOldAssignmentFromParent(Variable v) {
+        if (isJoin) {
+            return parents.get(0).parents.get(0).getOldAssignmentFromParent(v);
+        } else if (parents.isEmpty()){
+            return null;
+        } else {
+            List<Variable> searchList = parents.get(0).assignedVariables;
+            for (int i = searchList.size() - 1; i >= 0; i--) {
+                Variable oldVar = searchList.get(i);
+                if (v.getId() == oldVar.getId()) {
+                    return oldVar.copy();
+                }
+            }
+            return parents.get(0).getOldAssignmentFromParent(v);
+        }
     }
 }

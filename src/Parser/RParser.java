@@ -311,7 +311,7 @@ public class RParser {
         parseToken("<-");
         Result y = parseExpression();
         x.assignmentLocation = converter.assign(x, y);
-        ssaManager.addValueInstance(x);
+        ssaManager.addValueInstance(x, converter.getCurrentBlock());
     }
 
     private Result parseExpression() {

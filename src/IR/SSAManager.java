@@ -1,7 +1,6 @@
 package IR;
 
 import Model.BasicBlock;
-import Model.Instruction;
 import Model.Variable;
 
 import java.util.*;
@@ -20,31 +19,36 @@ public class SSAManager {
     HashMap<Variable, List<Variable>> varDefUseChain = new HashMap<>();
     Stack<List<Phi>> phiStack = new Stack<>();
 
-    public void addValueInstance(Variable v) {
+    public void addValueInstance(Variable v, BasicBlock currentBlock) {
         // Create def in def-use chain
         varDefUseChain.put(v, new ArrayList<>());
-
+        currentBlock.assignedVariables.add(v);
 
         if (!phiStack.empty()) { // we are in one of the branches
             //store old value instance in phi for later use.
             Phi p = new Phi();
-            p.old = varIDInstanceMap.getOrDefault(v.getId(), null);
+            p.old = currentBlock.getOldAssignmentFromParent(v);
+            if (p.old == null) p.old = v.copy();
 
             //get phi for current variable
             List<Phi> phiInstructions = phiStack.peek();
-            List<Phi> phisForV = phiInstructions.stream().filter(phi -> phi.old.getId() == v.getId()).collect(Collectors.toList());
+
+            List<Phi> phisForV = phiInstructions.stream()
+                    .filter(phi -> phi.old != null && phi.old.getId() == v.getId())
+                    .collect(Collectors.toList());
             assert phisForV.size() <= 1;
             Phi phiForV;
             if (phisForV.isEmpty()) {  // no phi found. add phi to be added to join later.
                 phiForV = p;
+                if (phiForV.old == null) phiForV.old = v.copy();
                 phiInstructions.add(phiForV);
             } else {
                 phiForV = phisForV.get(0);
             }
             if (leftBranch) {
-                phiForV.left = v;
+                phiForV.left = v.copy();
             } else {
-                phiForV.right = v;
+                phiForV.right = v.copy();
             }
         }
 
@@ -71,15 +75,16 @@ public class SSAManager {
 
     public void addPhiInstructionsForIf(Converter converter) {
         List<Phi> phiInstructions = phiStack.pop();
+
         for (Phi phi : phiInstructions) {
             if (phi.left == null) {
-                phi.left = phi.old;
+                phi.left = phi.old.copy();
             } else if (phi.right == null) {
-                phi.right = phi.old;
+                phi.right = phi.old.copy();
             }
             Variable newVar = phi.old.copy();
             newVar.assignmentLocation = converter.phi(newVar, phi.left, phi.right);
-            addValueInstance(newVar);
+            addValueInstance(newVar, converter.getCurrentBlock());
         }
     }
 
@@ -91,9 +96,9 @@ public class SSAManager {
             Variable newVar = phi.old.copy();
             List<Variable> useChain = varDefUseChain.get(newVar);
             newVar.assignmentLocation = converter.whilePhi(newVar, phi.old, phi.right);
-            addValueInstance(newVar);
+            addValueInstance(newVar, converter.getCurrentBlock());
             for (Variable use : useChain) {
-                if (use.useLocation.number >= resetLocation)
+                if (use.useLocation != null && use.useLocation.number >= resetLocation)
                     use.assignmentLocation = newVar.assignmentLocation;
             }
         }
