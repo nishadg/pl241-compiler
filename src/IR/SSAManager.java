@@ -5,8 +5,7 @@ import Model.Variable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public enum SSAManager {
-    INSTANCE;
+public class SSAManager {
 
     class Phi {
         Variable old;
@@ -16,12 +15,19 @@ public enum SSAManager {
 
     public boolean leftBranch = true;
     HashMap<Integer, Variable> varIDInstanceMap = new HashMap<>();
+    HashMap<Variable, List<Variable>> varDefUseChain = new HashMap<>();
     Stack<List<Phi>> phiStack = new Stack<>();
 
     public void addValueInstance(Variable v) {
+        // Create def in def-use chain
+        varDefUseChain.put(v, new ArrayList<>());
+
+        // Add value instance to var-instance map
+        varIDInstanceMap.put(v.getId(), v);
+
+        // Create phi instruction if in a branch
         Phi p = new Phi();
         p.old = varIDInstanceMap.getOrDefault(v.getId(), null);
-        varIDInstanceMap.put(v.getId(), v);
         if (!phiStack.empty()) { // we are in one of the branches
             //get phi for current variable
             List<Phi> phiInstructions = phiStack.peek();
@@ -42,10 +48,13 @@ public enum SSAManager {
         }
     }
 
-    public Variable getCurrentValueInstance(String varName) {
+    public Variable getCurrentValueInstance(String varName, boolean isDef) {
         Variable v = Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(varName)).copy();
         if (varIDInstanceMap.containsKey(v.getId())) {
             v = varIDInstanceMap.get(v.getId()).copy();
+
+            // add use to def-use chain
+            if (!isDef) varDefUseChain.get(v).add(v);
         }
         return v;
     }
@@ -54,7 +63,7 @@ public enum SSAManager {
         phiStack.push(new ArrayList<>());
     }
 
-    public void addPhiInstructionsToCurrentBlock() {
+    public void addPhiInstructionsToCurrentBlock(Converter converter) {
         List<Phi> phiInstructions = phiStack.pop();
         for (Phi phi : phiInstructions) {
             if (phi.left == null) {
@@ -63,8 +72,8 @@ public enum SSAManager {
                 phi.right = phi.old;
             }
             Variable newVar = phi.old.copy();
-            newVar.assignmentLocation = Converter.INSTANCE.phi(newVar, phi.left, phi.right);
-            SSAManager.INSTANCE.addValueInstance(newVar);
+            newVar.assignmentLocation = converter.phi(newVar, phi.left, phi.right);
+            addValueInstance(newVar);
         }
     }
 }

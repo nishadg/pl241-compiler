@@ -14,17 +14,21 @@ import static Parser.Token.*;
 
 public class RParser {
     private RScanner rScanner;
+    private SSAManager ssaManager;
+    private Converter converter;
     private int sym; // the current token on the input
 
     public RParser(String fileName) throws IOException {
         rScanner = new RScanner(fileName);
+        converter = new Converter();
+        ssaManager = new SSAManager();
         CFG.INSTANCE.setName(fileName);
     }
 
     public void parse() {
         sym = rScanner.getSym();
         parseToken("main");
-        Converter.INSTANCE.createFunctionBlock(ScopeManager.MAIN_SCOPE);
+        converter.createFunctionBlock(ScopeManager.MAIN_SCOPE);
         ScopeManager.INSTANCE.createScope(ScopeManager.MAIN_SCOPE);
         parseVarDecl();
         parseFuncDecl();
@@ -32,7 +36,7 @@ public class RParser {
         parseStatSequence();
         parseToken("}");
         parseToken(".");
-        Converter.INSTANCE.end();
+        converter.end();
         System.out.println("Parsed successfully!");
     }
 
@@ -65,7 +69,7 @@ public class RParser {
             nextSym();
             checkIdent();
             String functionName = rScanner.getCurrentToken();
-            Converter.INSTANCE.createFunctionBlock(functionName);
+            converter.createFunctionBlock(functionName);
             ScopeManager.INSTANCE.createScope(functionName);
 
             //Function arguments
@@ -86,7 +90,7 @@ public class RParser {
             rScanner.declareMode = false;
             parseFuncBody();
             parseToken(";");
-            Converter.INSTANCE.backToMain();
+            converter.backToMain();
             ScopeManager.INSTANCE.backToMain();
         }
     }
@@ -133,64 +137,75 @@ public class RParser {
     private void parseReturnStatement() {
         nextSym();
         Result returnVal = parseExpression();
-        Converter.INSTANCE.returnFromFunction(returnVal);
+        converter.returnFromFunction(returnVal);
     }
 
     private void parseWhileStatement() {
         nextSym();
-        BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
-        if(parent.getInstructionList().size() != 0){
-            parent = Converter.INSTANCE.createChildOfCurrentBlock();
-        }
-        BasicBlock leftBlock = Converter.INSTANCE.createLeftBlockFor(parent);
-        BasicBlock rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
-        BasicBlock joinBlock = Converter.INSTANCE.createWhileJoinBlock();
-        Converter.INSTANCE.setCurrentBlock(joinBlock);
-        int loopBackAddress = Instruction.getCounter();
-        Condition x = parseRelation();
-        Value y = Converter.INSTANCE.branchOnCondition(x);
-        Converter.INSTANCE.setCurrentBlock(leftBlock);
 
+        // Create join block
+        BasicBlock parent = converter.getCurrentBlock();
+        if(parent.getInstructionList().size() != 0){
+            parent = converter.createChildOfCurrentBlock();
+        }
+        BasicBlock leftBlock = converter.createLeftBlockFor(parent);
+        BasicBlock rightBlock = converter.createRightBlockFor(parent);
+        BasicBlock joinBlock = converter.createWhileJoinBlock();
+        converter.setCurrentBlock(joinBlock);
+        int loopBackAddress = Instruction.getCounter();
+        ssaManager.pushToPhiStack();
+        boolean parentBranch = ssaManager.leftBranch;
+
+        // Parse Condition
+        Condition x = parseRelation();
+        Value y = converter.branchOnCondition(x);
+        converter.setCurrentBlock(leftBlock);
+
+        // Parse loop
         parseToken("do");
         parseStatSequence();
-        Value end = Converter.INSTANCE.branch();
+        Value end = converter.branch();
         end.location = loopBackAddress;
-        parseToken("od");
 
+        // Finish loop
+        parseToken("od");
         y.location = Instruction.getCounter();
-        leftBlock = Converter.INSTANCE.getCurrentBlock();
-        Converter.INSTANCE.fixupWhileJoinBlock(leftBlock, joinBlock);
-        Converter.INSTANCE.setCurrentBlock(rightBlock);
+        leftBlock = converter.getCurrentBlock();
+        converter.fixupWhileJoinBlock(leftBlock, joinBlock);
+        converter.setCurrentBlock(joinBlock);
+        ssaManager.addPhiInstructionsToCurrentBlock(converter);
+        converter.setCurrentBlock(rightBlock);
+        ssaManager.leftBranch = parentBranch;
     }
 
     private void parseIfStatement() {
         // Parse condition
         nextSym();
         Condition x = parseRelation();
-        Value y = Converter.INSTANCE.branchOnCondition(x);
-        SSAManager.INSTANCE.pushToPhiStack();
-        boolean parentBranch = SSAManager.INSTANCE.leftBranch;
+        Value y = converter.branchOnCondition(x);
+        ssaManager.pushToPhiStack();
+        boolean parentBranch = ssaManager.leftBranch;
 
         // Parse Left
         parseToken("then");
-        BasicBlock parent = Converter.INSTANCE.getCurrentBlock();
-        BasicBlock leftBlock = Converter.INSTANCE.createLeftBlockFor(parent);
-        Converter.INSTANCE.setCurrentBlock(leftBlock);
-        SSAManager.INSTANCE.leftBranch = true;
+        BasicBlock parent = converter.getCurrentBlock();
+        BasicBlock leftBlock = converter.createLeftBlockFor(parent);
+        converter.setCurrentBlock(leftBlock);
+        ssaManager.leftBranch = true;
         parseStatSequence();
-        leftBlock = Converter.INSTANCE.getCurrentBlock();
+        leftBlock = converter.getCurrentBlock();
 
         // Check and parse right
         BasicBlock rightBlock;
         if (sym == Token.elseToken) {
-            Value end = Converter.INSTANCE.branch();
+            Value end = converter.branch();
             y.location = Instruction.getCounter();
             nextSym();
-            rightBlock = Converter.INSTANCE.createRightBlockFor(parent);
-            SSAManager.INSTANCE.leftBranch = false;
-            Converter.INSTANCE.setCurrentBlock(rightBlock);
+            rightBlock = converter.createRightBlockFor(parent);
+            ssaManager.leftBranch = false;
+            converter.setCurrentBlock(rightBlock);
             parseStatSequence();
-            rightBlock = Converter.INSTANCE.getCurrentBlock();
+            rightBlock = converter.getCurrentBlock();
             end.location = Instruction.getCounter();
         } else {
             rightBlock = parent;
@@ -198,10 +213,10 @@ public class RParser {
         }
 
         // Join left and right
-        BasicBlock joinBlock = Converter.INSTANCE.createIfJoinBlock(leftBlock, rightBlock);
-        Converter.INSTANCE.setCurrentBlock(joinBlock);
-        SSAManager.INSTANCE.addPhiInstructionsToCurrentBlock();
-        SSAManager.INSTANCE.leftBranch = parentBranch; // restore to parent branch value (left/right)
+        BasicBlock joinBlock = converter.createIfJoinBlock(leftBlock, rightBlock);
+        converter.setCurrentBlock(joinBlock);
+        ssaManager.addPhiInstructionsToCurrentBlock(converter);
+        ssaManager.leftBranch = parentBranch; // restore to parent branch value (left/right)
         parseToken("fi");
     }
 
@@ -209,7 +224,7 @@ public class RParser {
         Result x = parseExpression();
         int code = parseRelOp();
         Result y = parseExpression();
-        return Converter.INSTANCE.compare(code, x, y);
+        return converter.compare(code, x, y);
     }
 
     private int parseRelOp() {
@@ -246,11 +261,11 @@ public class RParser {
             } while (sym == Token.commaToken);
             parseToken(")");
         }
-        return Converter.INSTANCE.callFunction(ScopeManager.INSTANCE.findTokenInScope(functionName));
+        return converter.callFunction(ScopeManager.INSTANCE.findTokenInScope(functionName));
     }
 
     private Result parseOutputNewLine() {
-        Converter.INSTANCE.newLine();
+        converter.newLine();
         parseToken("(");
         parseToken(")");
         return null;
@@ -260,12 +275,12 @@ public class RParser {
         parseToken("(");
         Result x = parseExpression();
         parseToken(")");
-        Converter.INSTANCE.output(x);
+        converter.output(x);
         return x;
     }
 
     private Result parseInputNum() {
-        Converter.INSTANCE.input();
+        converter.input();
         parseToken("(");
         parseToken(")");
         return new Value(Instruction.getCounter());
@@ -273,11 +288,11 @@ public class RParser {
 
     private void parseAssignment() {
         nextSym();
-        Variable x = parseDesignator();
+        Variable x = parseDesignator(true);
         parseToken("<-");
         Result y = parseExpression();
-        x.assignmentLocation = Converter.INSTANCE.assign(x, y);
-        SSAManager.INSTANCE.addValueInstance(x);
+        x.assignmentLocation = converter.assign(x, y);
+        ssaManager.addValueInstance(x);
     }
 
     private Result parseExpression() {
@@ -286,7 +301,7 @@ public class RParser {
             int op = sym;
             nextSym();
             Result y = parseTerm();
-            x = Converter.INSTANCE.compute(op, x, y);
+            x = converter.compute(op, x, y);
         }
         return x;
     }
@@ -297,7 +312,7 @@ public class RParser {
             int op = sym;
             nextSym();
             Result y = parseFactor();
-            x = Converter.INSTANCE.compute(op, x, y);
+            x = converter.compute(op, x, y);
         }
         return x;
     }
@@ -306,7 +321,7 @@ public class RParser {
         Result f;
         switch (sym) {
             case Token.ident:
-                f = parseDesignator();
+                f = parseDesignator(false);
                 break;
             case Token.number:
                 f = new Constant(rScanner.getNumVal());
@@ -327,9 +342,9 @@ public class RParser {
         return f;
     }
 
-    private Variable parseDesignator() {
+    private Variable parseDesignator(boolean isDef) {
         checkIdent();
-        Variable var = SSAManager.INSTANCE.getCurrentValueInstance(rScanner.getCurrentToken());
+        Variable var = ssaManager.getCurrentValueInstance(rScanner.getCurrentToken(), isDef);
         nextSym();
         while (sym == Token.openbracketToken) {
             nextSym();

@@ -9,8 +9,7 @@ import java.util.Map;
 
 import static Model.Kind.*;
 
-public enum Converter {
-    INSTANCE;
+public class Converter {
 
     private BasicBlock currentBlock;
     private Map<Integer, Operation> tokenOpMap = Map.ofEntries(

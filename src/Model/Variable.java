@@ -2,6 +2,7 @@ package Model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Variable extends Result {
     int id;
@@ -41,9 +42,14 @@ public class Variable extends Result {
     public boolean equals(Object obj) {
         if (obj instanceof Variable) {
             Variable v = (Variable) obj;
-            return this.id == v.id;
+            return this.id == v.id && this.assignmentLocation == v.assignmentLocation;
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, assignmentLocation);
     }
 
     public Variable copy() {
