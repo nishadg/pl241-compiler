@@ -1,6 +1,7 @@
 package Model;
 
 import IR.CFG;
+import IR.Converter;
 import IR.ScopeManager;
 
 import java.util.ArrayList;
@@ -63,7 +64,9 @@ public class BasicBlock extends Result {
 
     public Variable getOldAssignmentFromParent(Variable v) {
         if (parents.isEmpty()) {
-            return Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(v.name)).copy();
+            Variable currentVar = Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(v.getName())).copy();
+            currentVar.assignmentLocation = Converter.initLocation;
+            return currentVar;
         } else if (isIfJoin) {
             return ifParentBlock.getAssignment(v);
         } else {
@@ -83,6 +86,6 @@ public class BasicBlock extends Result {
 
     public Variable getAssignment(Variable v) {
         Variable oldVar = searchByID(assignedVariables, v);
-        return oldVar != null ? oldVar : getOldAssignmentFromParent(v).copy();
+        return oldVar != null ? oldVar : getOldAssignmentFromParent(v);
     }
 }

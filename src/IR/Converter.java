@@ -24,6 +24,7 @@ public class Converter {
             Map.entry(Token.divToken, Operation.divi),
             Map.entry(Token.timesToken, Operation.muli)
     );
+    public static Instruction initLocation;
 
     public Result compute(int op, Result x, Result y) {
         if (x.kind == Kind.CONST && y.kind == Kind.CONST) {
@@ -206,5 +207,11 @@ public class Converter {
 
     public void returnFromFunction(Result returnVal) {
         currentBlock.addInstruction(new Instruction(Operation.ret, returnVal));
+    }
+
+    public void init() {
+        createFunctionBlock(ScopeManager.MAIN_SCOPE);
+        ScopeManager.INSTANCE.createScope(ScopeManager.MAIN_SCOPE);
+        initLocation = currentBlock.addInstruction(new Instruction(Operation.init));
     }
 }

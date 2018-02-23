@@ -1,7 +1,9 @@
 package IR;
 
 import Model.BasicBlock;
+import Model.Instruction;
 import Model.Variable;
+import javafx.scene.chart.ValueAxis;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,17 +56,17 @@ public class SSAManager {
     }
 
     public Variable getCurrentValueInstance(String varName, BasicBlock currentBlock, boolean isDef) {
-        Variable v = Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(varName));
-        v = currentBlock.getAssignment(v);
-        if (varDefUseChain.containsKey(v)) {
-//            v = varIDInstanceMap.get(v.getId()).copy();
+        Variable currentVar = Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(varName)).copy();
+        currentVar = currentBlock.getAssignment(currentVar);
 
-            // add use to def-use chain
-            if (!isDef) {
-                varDefUseChain.get(v).add(v);
-            }
+        if (!varDefUseChain.containsKey(currentVar)) {
+            varDefUseChain.put(currentVar.copy(), new ArrayList<>());
         }
-        return v;
+        if (!isDef) { // add use to def-use chain
+            varDefUseChain.get(currentVar).add(currentVar);
+        }
+
+        return currentVar;
     }
 
     public void pushToPhiStack() {
@@ -103,7 +105,6 @@ public class SSAManager {
         int resetLocation = joinBlock.getInstructionList().get(0).number;
         List<Phi> phiInstructions = phiStack.pop();
         for (Phi phi : phiInstructions) {
-            phi.old = joinBlock.getOldAssignmentFromParent(phi.old);
             Variable newVar = phi.old.copy();
             List<Variable> useChain = varDefUseChain.get(newVar);
             newVar.assignmentLocation = converter.whilePhi(newVar, phi.old, phi.right);
@@ -116,8 +117,7 @@ public class SSAManager {
             addValueInstance(newVar, converter.getCurrentBlock());
 
             // update uses with new value instance
-            if (useChain != null)
-                updateUses(newVar, useChain, resetLocation);
+            updateUses(newVar, useChain, resetLocation);
         }
     }
 

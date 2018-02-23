@@ -28,8 +28,7 @@ public class RParser {
     public void parse() {
         sym = rScanner.getSym();
         parseToken("main");
-        converter.createFunctionBlock(ScopeManager.MAIN_SCOPE);
-        ScopeManager.INSTANCE.createScope(ScopeManager.MAIN_SCOPE);
+        converter.init();
         parseVarDecl();
         parseFuncDecl();
         parseToken("{");
