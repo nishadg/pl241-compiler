@@ -22,7 +22,7 @@ public class DotGenerator {
         for (BasicBlock block : graph) {
             String blockLabel = "";
             if (block.isWhileJoin) blockLabel = "While ";
-            if (block.isIfJoin) blockLabel = "If ";
+            if (block.isIfJoin) blockLabel = "Fi ";
             file.writeBytes(block.index + " [ label = \"" + blockLabel + "Block " + block.index + "\\l" + getInstructionsString(block) + "\" shape = \"box\"]");
             if (block.leftBlock != null)
                 file.writeBytes(block.index + " -> " + block.leftBlock.index + "\n");

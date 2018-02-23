@@ -1,9 +1,11 @@
 package Model;
 
 import IR.CFG;
+import IR.ScopeManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BasicBlock extends Result {
     static int counter = 0;
@@ -18,6 +20,7 @@ public class BasicBlock extends Result {
 
     List<Instruction> instructionList = new ArrayList<>();
     public List<BasicBlock> parents = new ArrayList<>();
+    public BasicBlock ifParentBlock;
     public BasicBlock leftBlock;
     public BasicBlock rightBlock;
     public boolean isIfJoin = false;
@@ -60,18 +63,26 @@ public class BasicBlock extends Result {
 
     public Variable getOldAssignmentFromParent(Variable v) {
         if (parents.isEmpty()) {
-            return v;
+            return Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(v.name)).copy();
         } else if (isIfJoin) {
-            return parents.get(0).parents.get(0).getOldAssignmentFromParent(v);
+            return ifParentBlock.getAssignment(v);
         } else {
-            List<Variable> searchList = parents.get(0).assignedVariables;
-            for (int i = searchList.size() - 1; i >= 0; i--) {
-                Variable oldVar = searchList.get(i);
-                if (v.getId() == oldVar.getId()) {
-                    return oldVar.copy();
-                }
-            }
-            return parents.get(0).getOldAssignmentFromParent(v);
+            return parents.get(0).getAssignment(v);
         }
+    }
+
+    private Variable searchByID(List<Variable> searchList, Variable v) {
+        for (int i = searchList.size() - 1; i >= 0; i--) {
+            Variable oldVar = searchList.get(i);
+            if (v.getId() == oldVar.getId()) {
+                return oldVar.copy();
+            }
+        }
+        return null;
+    }
+
+    public Variable getAssignment(Variable v) {
+        Variable oldVar = searchByID(assignedVariables, v);
+        return oldVar != null ? oldVar : getOldAssignmentFromParent(v).copy();
     }
 }

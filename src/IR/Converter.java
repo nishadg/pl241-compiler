@@ -160,9 +160,10 @@ public class Converter {
         return right;
     }
 
-    public BasicBlock createIfJoinBlock(BasicBlock leftBlock, BasicBlock rightBlock) {
+    public BasicBlock createIfJoinBlock(BasicBlock leftBlock, BasicBlock rightBlock, BasicBlock parent) {
         BasicBlock joinBlock = BasicBlock.create();
         joinBlock.isIfJoin = true;
+        joinBlock.ifParentBlock = parent;
         leftBlock.leftBlock = joinBlock;
         if (rightBlock.leftBlock == null) // check else/fallthrough
             rightBlock.leftBlock = joinBlock;

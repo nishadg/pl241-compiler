@@ -25,11 +25,6 @@ public class SSAManager {
         currentBlock.assignedVariables.add(v);
 
         if (!phiStack.empty()) { // we are in one of the branches
-            //store old value instance in phi for later use.
-            Phi p = new Phi();
-            p.old = currentBlock.getOldAssignmentFromParent(v);
-            if (p.old == null) p.old = v.copy();
-
             //get phi for current variable
             List<Phi> phiInstructions = phiStack.peek();
 
@@ -37,13 +32,16 @@ public class SSAManager {
                     .filter(phi -> phi.old != null && phi.old.getId() == v.getId())
                     .collect(Collectors.toList());
             assert phisForV.size() <= 1;
+
             Phi phiForV;
             if (phisForV.isEmpty()) {  // no phi found. add phi to be added to join later.
-                phiForV = p;
+                phiForV = new Phi();
+                phiForV.old = currentBlock.getOldAssignmentFromParent(v);
                 phiInstructions.add(phiForV);
             } else {
                 phiForV = phisForV.get(0);
             }
+
             if (leftBranch) {
                 phiForV.left = v.copy();
             } else {
@@ -55,10 +53,11 @@ public class SSAManager {
         varIDInstanceMap.put(v.getId(), v);
     }
 
-    public Variable getCurrentValueInstance(String varName, boolean isDef) {
-        Variable v = Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(varName)).copy();
-        if (varIDInstanceMap.containsKey(v.getId())) {
-            v = varIDInstanceMap.get(v.getId()).copy();
+    public Variable getCurrentValueInstance(String varName, BasicBlock currentBlock, boolean isDef) {
+        Variable v = Objects.requireNonNull(ScopeManager.INSTANCE.findTokenInScope(varName));
+        v = currentBlock.getAssignment(v);
+        if (varDefUseChain.containsKey(v)) {
+//            v = varIDInstanceMap.get(v.getId()).copy();
 
             // add use to def-use chain
             if (!isDef) {
@@ -83,8 +82,20 @@ public class SSAManager {
             }
             Variable newVar = phi.old.copy();
             newVar.assignmentLocation = converter.phi(newVar, phi.left, phi.right);
+
+            // add the left and right phi to use chains
+            addPhiToUseChain(phi.left, newVar);
+            addPhiToUseChain(phi.right, newVar);
+
+            // create value instance and use chain for new var
             addValueInstance(newVar, converter.getCurrentBlock());
         }
+    }
+
+    private void addPhiToUseChain(Variable phiVar, Variable newVar) {
+        phiVar.useLocation = newVar.assignmentLocation.number;
+        if (varDefUseChain.containsKey(phiVar))
+            varDefUseChain.get(phiVar).add(phiVar);
     }
 
     public void addPhiForWhile(Converter converter, BasicBlock joinBlock) {
@@ -96,17 +107,25 @@ public class SSAManager {
             Variable newVar = phi.old.copy();
             List<Variable> useChain = varDefUseChain.get(newVar);
             newVar.assignmentLocation = converter.whilePhi(newVar, phi.old, phi.right);
+
+            // add the left and right phi to use chains
+            addPhiToUseChain(phi.old, newVar);
+            addPhiToUseChain(phi.right, newVar);
+
+            // create value instance and use chain for new var
             addValueInstance(newVar, converter.getCurrentBlock());
 
             // update uses with new value instance
-            updateUses(newVar, useChain, resetLocation);
+            if (useChain != null)
+                updateUses(newVar, useChain, resetLocation);
         }
     }
 
     private void updateUses(Variable newVar, List<Variable> useChain, int resetLocation) {
         for (Variable use : useChain) {
-            if (use.useLocation >= resetLocation){
-                use.assignmentLocation = newVar.assignmentLocation;
+            if (use.useLocation >= resetLocation) {
+                if (use.useLocation != newVar.assignmentLocation.number)
+                    use.assignmentLocation = newVar.assignmentLocation;
             }
         }
     }

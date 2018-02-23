@@ -173,6 +173,7 @@ public class RParser {
         parseToken("od");
         leftBlock = converter.getCurrentBlock();
         converter.fixupWhileJoinBlock(leftBlock, joinBlock);
+        ssaManager.leftBranch = parentBranch;
         ssaManager.addPhiForWhile(converter, joinBlock);
 
         // fix branch addresses
@@ -181,7 +182,6 @@ public class RParser {
 
         // proceed
         converter.setCurrentBlock(rightBlock);
-        ssaManager.leftBranch = parentBranch;
     }
 
     private void parseIfStatement() {
@@ -219,13 +219,13 @@ public class RParser {
             parseStatSequence();
 
             // Join left and right
-            joinBlock = converter.createIfJoinBlock(leftBlock, converter.getCurrentBlock());
+            joinBlock = converter.createIfJoinBlock(leftBlock, converter.getCurrentBlock(), parent);
 
             // fix branch for left block
             leftBlock.getLastInstruction().setX(joinBlock);
         } else {
             // Join left and parent
-            joinBlock = converter.createIfJoinBlock(leftBlock, parent);
+            joinBlock = converter.createIfJoinBlock(leftBlock, parent, parent);
 
             // fix branch for parent
             parent.getLastInstruction().setY(joinBlock);
@@ -233,10 +233,10 @@ public class RParser {
 
 
         converter.setCurrentBlock(joinBlock);
+        ssaManager.leftBranch = parentBranch; // restore to parent branch value (left/right)
         ssaManager.addPhiInstructionsForIf(converter);
 
         // proceed
-        ssaManager.leftBranch = parentBranch; // restore to parent branch value (left/right)
         parseToken("fi");
     }
 
@@ -363,7 +363,7 @@ public class RParser {
 
     private Variable parseDesignator(boolean isDef) {
         checkIdent();
-        Variable var = ssaManager.getCurrentValueInstance(rScanner.getCurrentToken(), isDef);
+        Variable var = ssaManager.getCurrentValueInstance(rScanner.getCurrentToken(), converter.getCurrentBlock(), isDef);
         nextSym();
         while (sym == Token.openbracketToken) {
             nextSym();

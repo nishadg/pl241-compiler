@@ -39,7 +39,7 @@ public class Variable extends Result {
         if (!isFunction) {
             indexString.append("_");
             if (assignmentLocation == null) {
-                indexString.append("Unassigned");
+                indexString.append("?");
             } else {
                 indexString.append(assignmentLocation.number);
             }
