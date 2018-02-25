@@ -5,6 +5,7 @@ import Model.Register;
 import Parser.Token;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static Model.Kind.*;
@@ -31,22 +32,27 @@ public class Converter {
             Constant c = (Constant) x;
             x = c.compute(op, y);
         } else {
-//            x = load(x);
+            x = load(x);
             Instruction i;
-//            if (y.kind == Kind.CONST) {
-//                i = new Instruction(tokenOpImmMap.get(op), x, y);
-//            } else {
-//                y = load(y);
-                i = new Instruction(tokenOpMap.get(op), x, y);
-//            }
+            if (y.kind != Kind.CONST) {
+                y = load(y);
+            }
+            i = new Instruction(tokenOpMap.get(op), x, y);
             x = currentBlock.addInstruction(i);
         }
         return x;
     }
 
-    Result load(Result x) {
+    private Result load(Result x) {
         if (x.kind == VAR) {
-            Instruction i = new Instruction(Operation.load, x);
+            Instruction i;
+            List<Result> indices = ((Variable) x).indices;
+            if (indices.isEmpty()) { // normal array
+                i = new Instruction(Operation.load, x);
+            } else { // array variable
+                Result loadedArray = loadArray((Variable) x);
+                i = new Instruction(Operation.load, loadedArray);
+            }
             return currentBlock.addInstruction(i);
         } else if (x.kind == CONST) {
             // TODO: Use R0 for 0 value
@@ -58,6 +64,14 @@ public class Converter {
         }
     }
 
+    private Result loadArray(Variable x) {
+        Result loadedArray = x;
+        for (Result d : x.indices) {
+            loadedArray = currentBlock.addInstruction(new Instruction(Operation.adda, loadedArray, d));
+        }
+        return loadedArray;
+    }
+
     public Instruction assign(Result x, Result y) { // let x <= y;
 //        if (y.kind == CONST) {
 //            Register r = new Register(0);
@@ -65,17 +79,27 @@ public class Converter {
 //            Value a = currentBlock.addInstruction(i);
 //            return currentBlock.addInstruction(new Instruction(Operation.move, a, x));
 //        } else {
-            return currentBlock.addInstruction(new Instruction(Operation.move, y, x));
+        x = loadIfArray(x);
+        y = loadIfArray(y);
+        Instruction storedAtLocation = currentBlock.addInstruction(new Instruction(Operation.move, y, x));
+        return currentBlock.addInstruction(new Instruction(Operation.store, storedAtLocation, x));
 //        }
     }
 
-    public Instruction phi(Variable old, Variable left, Variable right){
+    private Result loadIfArray(Result x) {
+        if (x.kind == VAR)
+            return loadArray((Variable) x);
+        else
+            return x;
+    }
+
+    public Instruction phi(Variable old, Variable left, Variable right) {
         Instruction i = new Instruction(Operation.phi, left, right);
         i.setPhiInstruction(old);
         return currentBlock.addInstruction(i);
     }
 
-    public Instruction whilePhi(Variable old, Variable left, Variable right){
+    public Instruction whilePhi(Variable old, Variable left, Variable right) {
         Instruction i = new Instruction(Operation.phi, left, right);
         i.setPhiInstruction(old);
         return currentBlock.addInstructionToStart(i);

@@ -33,9 +33,9 @@ public class Variable extends Result {
     @Override
     public String toString() {
         StringBuilder indexString = new StringBuilder();
-        for (Result i : indices) {
-            indexString.append("[").append(i).append("]");
-        }
+//        for (Result i : indices) {
+//            indexString.append("[").append(i).append("]");
+//        }
         if (!isFunction) {
             indexString.append("_");
             if (assignmentLocation == null) {

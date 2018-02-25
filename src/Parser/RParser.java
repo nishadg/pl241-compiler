@@ -176,8 +176,8 @@ public class RParser {
         ssaManager.addPhiForWhile(converter, joinBlock);
 
         // fix branch addresses
-        joinBlock.leftBlock.getLastInstruction().setX(joinBlock);
-        joinBlock.getLastInstruction().setY(joinBlock.rightBlock);
+        leftBlock.getLastInstruction().setX(joinBlock);
+        joinBlock.getLastInstruction().setY(rightBlock);
 
         // proceed
         converter.setCurrentBlock(rightBlock);
