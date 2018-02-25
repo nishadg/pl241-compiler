@@ -13,6 +13,7 @@ public class DotGenerator {
 
     private String fileName;
     private RandomAccessFile file;
+    private String dominatorGraphStyle = " [style = dotted fillcolor = red arrowhead=inv]";
 
     public DotGenerator(String name) {
         this.fileName = name.substring(name.lastIndexOf('/') + 1, name.lastIndexOf('.'));
@@ -28,9 +29,15 @@ public class DotGenerator {
                 file.writeBytes(block.index + " -> " + block.leftBlock.index + "\n");
             if (block.rightBlock != null)
                 file.writeBytes(block.index + " -> " + block.rightBlock.index + "\n");
-//            for (BasicBlock parent : block.parents) {
-//                file.writeBytes(block.index + " -> " + parent.index + "[color = red]\n");
-//            }
+
+            // Dominator edges
+            if (!block.parents.isEmpty()) {
+                if (block.isIfJoin) {
+                    file.writeBytes(block.ifParentBlock.index + " -> " + block.index + dominatorGraphStyle);
+                } else {
+                    file.writeBytes(block.parents.get(0).index + " -> " + block.index + dominatorGraphStyle);
+                }
+            }
         }
     }
 

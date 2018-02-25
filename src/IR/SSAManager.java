@@ -26,7 +26,7 @@ public class SSAManager {
         varDefUseChain.put(v, new ArrayList<>());
         currentBlock.assignedVariables.add(v);
 
-        if (!phiStack.empty()) { // we are in one of the branches
+        if (!phiStack.empty()) { // we are in one of the branches. Create phi for outer join block.
             //get phi for current variable
             List<Phi> phiInstructions = phiStack.peek();
 
