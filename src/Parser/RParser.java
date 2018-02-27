@@ -187,7 +187,7 @@ public class RParser {
 
     private void parseIfStatement() {
         BasicBlock parent = converter.getCurrentBlock();
-        BasicBlock leftBlock = converter.createLeftBlockFor(parent, false);
+        BasicBlock leftBlock = converter.createLeftBlockFor(parent, true);
         BasicBlock joinBlock;
 
         // Parse condition

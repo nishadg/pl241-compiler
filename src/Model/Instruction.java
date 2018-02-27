@@ -4,7 +4,7 @@ import IR.Converter;
 
 public class Instruction extends Result {
     public enum DeleteReason {
-        CSE;
+        CSE, CP
     }
 
     DeleteReason deletedBecause;
@@ -61,7 +61,14 @@ public class Instruction extends Result {
 
     @Override
     public String toString() {
-        return "(" + (isDeleted ? replacementInstruction.number : number) + ")";
+        if (isDeleted) {
+            Instruction originalValue = this;
+            while (originalValue.isDeleted) {
+                originalValue = originalValue.replacementInstruction;
+            }
+            return  "(" + originalValue.number + ")";
+        } else
+            return "(" + number + ")";
     }
 
     @Override
@@ -99,5 +106,11 @@ public class Instruction extends Result {
 
     public void setY(BasicBlock y) {
         this.y = y;
+    }
+
+    public void propagateCopy(Result y) {
+        isDeleted = true;
+        deletedBecause = DeleteReason.CP;
+        replacementInstruction = (Instruction) y;
     }
 }

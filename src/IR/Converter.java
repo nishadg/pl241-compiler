@@ -80,8 +80,10 @@ public class Converter {
 //            return currentBlock.addInstruction(new Instruction(Operation.move, a, x));
 //        } else {
         if (x.kind == VAR) x = loadArray((Variable) x);
-        if (y.kind == VAR) y = load(y);
-        Instruction storedAtLocation = currentBlock.addInstruction(new Instruction(Operation.move, y, x));
+        if (y.kind == VAR || y.kind == CONST) y = load(y);
+        Instruction moveInstruction = new Instruction(Operation.move, y, x);
+        Instruction storedAtLocation = currentBlock.addInstruction(moveInstruction);
+        moveInstruction.propagateCopy(y);
         return currentBlock.addInstruction(new Instruction(Operation.store, storedAtLocation, x));
 //        }
     }
@@ -219,7 +221,7 @@ public class Converter {
 
 
     public BasicBlock createChildOfCurrentBlock() {
-        BasicBlock child = createLeftBlockFor(currentBlock, false);
+        BasicBlock child = createLeftBlockFor(currentBlock, true);
         setCurrentBlock(child);
         return child;
     }

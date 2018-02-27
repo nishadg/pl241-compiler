@@ -14,8 +14,8 @@ public class ParserTest {
     public static void main(String args[]) {
 //        readFile();
 //        scanFile();
-        parseAllFiles();
-//        parseFile("test025.txt");
+//        parseAllFiles();
+        parseFile("test017.txt");
     }
 
     private static void parseFile(String fileName) {

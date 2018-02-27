@@ -123,7 +123,10 @@ public class BasicBlock extends Result {
                 List<Instruction> instructions = anchor.get(Operation.load);
                 for (int anchorIndex = instructions.size() - 1; anchorIndex >= 0; anchorIndex--) {
                     Instruction anchoredInstruction = instructions.get(anchorIndex);
-                    if (i.x.equals(anchoredInstruction.x)) {
+                    if (anchoredInstruction.op == Operation.store && anchoredInstruction.y.equals(i.x)) {
+                        i.propagateCopy(anchoredInstruction.x);
+                        break;
+                    } else if (i.x.equals(anchoredInstruction.x)) {
                         index = anchorIndex;
                         break;
                     }
