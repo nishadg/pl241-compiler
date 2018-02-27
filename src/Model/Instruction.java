@@ -1,9 +1,16 @@
 package Model;
 
-public class Instruction extends Result{
-    public static int getCounter() {
-        return counter;
+import IR.Converter;
+
+public class Instruction extends Result {
+    public enum DeleteReason {
+        CSE;
     }
+
+    DeleteReason deletedBecause;
+    boolean isDeleted;
+    Instruction replacementInstruction;
+
     public static void resetCounter() {
         counter = 0;
     }
@@ -18,15 +25,12 @@ public class Instruction extends Result{
     Result x;
     Result y;
 
-    public int getNumber() {
-        return number;
-    }
-
     public int number;
     boolean isPhiInstruction;
     Variable phiVar;
+    BasicBlock containingBlock;
 
-    public void setPhiInstruction(Variable phiVar){
+    public void setPhiInstruction(Variable phiVar) {
         isPhiInstruction = true;
         this.phiVar = phiVar;
     }
@@ -43,11 +47,11 @@ public class Instruction extends Result{
         number = counter++;
 
         // set use instruction for variable
-        if(x!= null && x.kind == Kind.VAR){
-            ((Variable)x).useLocation = number;
+        if (x != null && x.kind == Kind.VAR) {
+            ((Variable) x).useLocation = number;
         }
-        if(y!= null && y.kind == Kind.VAR){
-            ((Variable)y).useLocation = number;
+        if (y != null && y.kind == Kind.VAR) {
+            ((Variable) y).useLocation = number;
         }
     }
 
@@ -57,19 +61,39 @@ public class Instruction extends Result{
 
     @Override
     public String toString() {
-        return "(" + number + ")";
+        return "(" + (isDeleted ? replacementInstruction.number : number) + ")";
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Instruction) {
+            Instruction i = (Instruction) obj;
+            if (i.op == this.op) {
+                return areOperandsSame(i.x, i.y)
+                        || (i.op == Operation.mul || i.op == Operation.add) && areOperandsSame(i.y, i.x);
+            }
+        }
+        return false;
+    }
+
+    private boolean areOperandsSame(Result x, Result y) {
+        boolean xIsSame = (this.x == null && x == null) || this.x.equals(x);
+        boolean yIsSame = (this.y == null && y == null) || this.y.equals(y);
+        return xIsSame && yIsSame;
+    }
 
     public String outputString() {
+        if (isDeleted) {
+            return number + ": " + replacementInstruction.toString() + " - " + deletedBecause;
+        }
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(number).append(": ");
         stringBuilder.append(op.name());
-        if(isPhiInstruction){
+        if (isPhiInstruction) {
             stringBuilder.append(" ").append(phiVar).append(" := ");
         }
-        if(x != null) stringBuilder.append(" ").append(x);
-        if(y != null) stringBuilder.append(" ").append(y);
+        if (x != null) stringBuilder.append(" ").append(x);
+        if (y != null) stringBuilder.append(" ").append(y);
         return stringBuilder.toString();
     }
 

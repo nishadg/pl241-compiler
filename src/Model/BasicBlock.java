@@ -4,33 +4,36 @@ import IR.CFG;
 import IR.Converter;
 import IR.ScopeManager;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class BasicBlock extends Result {
-    static int counter = 0;
+    private static int counter = 0;
 
-    public int index;
+    public int blockIndex;
+    public String name; // name of the function, set when creating a new function block.
+
+    // SSA fields
+    public List<Variable> assignedVariables = new ArrayList<>();
+    private List<Instruction> instructionList = new ArrayList<>();
 
     public List<Instruction> getInstructionList() {
         return instructionList;
     }
 
-    public List<Variable> assignedVariables = new ArrayList<>();
-
-    List<Instruction> instructionList = new ArrayList<>();
+    // CFG fields
     public List<BasicBlock> parents = new ArrayList<>();
     public BasicBlock ifParentBlock;
     public BasicBlock leftBlock;
     public BasicBlock rightBlock;
     public boolean isIfJoin = false;
     public boolean isWhileJoin = false;
-    public String name; // name of the function, set when creating a new function block.
+
+    // CSE fields
+    HashMap<Operation, List<Instruction>> anchor = new HashMap<>();
 
     private BasicBlock() {
         super(Kind.ADDR);
-        index = counter++;
+        blockIndex = counter++;
     }
 
     public static BasicBlock create() {
@@ -39,27 +42,31 @@ public class BasicBlock extends Result {
         return b;
     }
 
+    @Override
+    public String toString() {
+        return "[" + blockIndex + "]";
+    }
+
     public static void resetCounter() {
         counter = 0;
     }
 
     public Instruction addInstruction(Instruction i) {
+        searchInAnchor(i);
         instructionList.add(i);
+        i.containingBlock = this;
         return i;
     }
 
     public Instruction addInstructionToStart(Instruction i) {
+        assert i.op == Operation.phi;
         instructionList.add(0, i);
+        i.containingBlock = this;
         return i;
     }
 
     public Instruction getLastInstruction() {
         return instructionList.get(instructionList.size() - 1);
-    }
-
-    @Override
-    public String toString() {
-        return "[" + index + "]";
     }
 
     public Variable getOldAssignmentFromParent(Variable v) {
@@ -87,5 +94,56 @@ public class BasicBlock extends Result {
     public Variable getAssignment(Variable v) {
         Variable oldVar = searchByID(assignedVariables, v);
         return oldVar != null ? oldVar : getOldAssignmentFromParent(v);
+    }
+
+
+    // CSE functions
+    public void addToAnchor(Instruction i) {
+        Operation anchorOp = i.op;
+        if (!Operation.nonAnchored.contains(i.op)) {
+            if (i.op == Operation.store) {  // killing inanchors
+                anchorOp = Operation.load;
+            }
+            if (!anchor.containsKey(anchorOp)) anchor.put(anchorOp, new ArrayList<>());
+            anchor.get(anchorOp).add(i);
+        }
+    }
+
+    public void inheritAnchor(BasicBlock fromBlock) {
+        anchor = new HashMap<>();
+        for (Map.Entry<Operation, List<Instruction>> entry : fromBlock.anchor.entrySet()) {
+            anchor.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+    }
+
+    private void searchInAnchor(Instruction i) {
+        int index = -1;
+        if (anchor.containsKey(i.op)) {
+            if (i.op == Operation.load) { // need to break if same operand is stored
+                List<Instruction> instructions = anchor.get(Operation.load);
+                for (int anchorIndex = instructions.size() - 1; anchorIndex >= 0; anchorIndex--) {
+                    Instruction anchoredInstruction = instructions.get(anchorIndex);
+                    if (i.x.equals(anchoredInstruction.x)) {
+                        index = anchorIndex;
+                        break;
+                    }
+                }
+            } else {
+                index = anchor.get(i.op).indexOf(i);
+            }
+            if (index == -1) addToAnchor(i);
+            else {
+                i.isDeleted = true;
+                i.deletedBecause = Instruction.DeleteReason.CSE;
+                i.replacementInstruction = anchor.get(i.op).get(index);
+            }
+
+        } else {
+            addToAnchor(i);
+        }
+    }
+
+    public void initAnchor() {
+        anchor = new HashMap<>();
     }
 }

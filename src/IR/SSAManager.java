@@ -124,8 +124,9 @@ public class SSAManager {
     private void updateUses(Variable newVar, List<Variable> useChain, int resetLocation) {
         for (Variable use : useChain) {
             if (use.useLocation >= resetLocation) {
-                if (use.useLocation != newVar.assignmentLocation.number)
+                if (use.useLocation != newVar.assignmentLocation.number){
                     use.assignmentLocation = newVar.assignmentLocation;
+                }
             }
         }
     }

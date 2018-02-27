@@ -38,4 +38,8 @@ public class Constant extends Result {
         return "#" + value;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof Constant && ((Constant) obj).value == this.value;
+    }
 }

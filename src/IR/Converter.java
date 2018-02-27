@@ -55,7 +55,6 @@ public class Converter {
             }
             return currentBlock.addInstruction(i);
         } else if (x.kind == CONST) {
-            // TODO: Use R0 for 0 value
             Register r = new Register(0);
             Instruction i = new Instruction(Operation.addi, r, x);
             return currentBlock.addInstruction(i);
@@ -65,6 +64,7 @@ public class Converter {
     }
 
     private Result loadArray(Variable x) {
+        //TODO: do we need to load base register?
         Result loadedArray = x;
         for (Result d : x.indices) {
             loadedArray = currentBlock.addInstruction(new Instruction(Operation.adda, loadedArray, d));
@@ -79,18 +79,11 @@ public class Converter {
 //            Value a = currentBlock.addInstruction(i);
 //            return currentBlock.addInstruction(new Instruction(Operation.move, a, x));
 //        } else {
-        x = loadIfArray(x);
-        y = loadIfArray(y);
+        if (x.kind == VAR) x = loadArray((Variable) x);
+        if (y.kind == VAR) y = load(y);
         Instruction storedAtLocation = currentBlock.addInstruction(new Instruction(Operation.move, y, x));
         return currentBlock.addInstruction(new Instruction(Operation.store, storedAtLocation, x));
 //        }
-    }
-
-    private Result loadIfArray(Result x) {
-        if (x.kind == VAR)
-            return loadArray((Variable) x);
-        else
-            return x;
     }
 
     public Instruction phi(Variable old, Variable left, Variable right) {
@@ -171,10 +164,14 @@ public class Converter {
         currentBlock = CFG.INSTANCE.resetCurrentGraphToMain();
     }
 
-    public BasicBlock createLeftBlockFor(BasicBlock parent) {
+    public BasicBlock createLeftBlockFor(BasicBlock parent, boolean inheritAnchor) {
         BasicBlock left = BasicBlock.create();
         left.parents.add(parent);
         parent.leftBlock = left;
+        if (inheritAnchor)
+            left.inheritAnchor(parent); // for CSE
+        else
+            left.initAnchor();
         return left;
     }
 
@@ -182,6 +179,7 @@ public class Converter {
         BasicBlock right = BasicBlock.create();
         right.parents.add(parent);
         parent.rightBlock = right;
+        right.inheritAnchor(parent); // for CSE
         return right;
     }
 
@@ -196,6 +194,13 @@ public class Converter {
             rightBlock.rightBlock = joinBlock;
         joinBlock.parents.add(leftBlock);
         joinBlock.parents.add(rightBlock);
+        joinBlock.inheritAnchor(parent); // for CSE
+        return joinBlock;
+    }
+
+    public BasicBlock createWhileJoinBlock() {
+        BasicBlock joinBlock = currentBlock;
+        joinBlock.isWhileJoin = true;
         return joinBlock;
     }
 
@@ -207,12 +212,6 @@ public class Converter {
         this.currentBlock = current;
     }
 
-    public BasicBlock createWhileJoinBlock() {
-        BasicBlock joinBlock = currentBlock;
-        joinBlock.isWhileJoin = true;
-        return joinBlock;
-    }
-
     public void fixupWhileJoinBlock(BasicBlock leftBlock, BasicBlock joinBlock) {
         leftBlock.leftBlock = joinBlock;
         joinBlock.parents.add(leftBlock);
@@ -220,7 +219,7 @@ public class Converter {
 
 
     public BasicBlock createChildOfCurrentBlock() {
-        BasicBlock child = createLeftBlockFor(currentBlock);
+        BasicBlock child = createLeftBlockFor(currentBlock, false);
         setCurrentBlock(child);
         return child;
     }

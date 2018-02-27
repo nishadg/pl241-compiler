@@ -24,18 +24,18 @@ public class DotGenerator {
             String blockLabel = "";
             if (block.isWhileJoin) blockLabel = "While ";
             if (block.isIfJoin) blockLabel = "Fi ";
-            file.writeBytes(block.index + " [ label = \"" + blockLabel + "Block " + block.index + "\\l" + getInstructionsString(block) + "\" shape = \"box\"]");
+            file.writeBytes(block.blockIndex + " [ label = \"" + blockLabel + "Block " + block.blockIndex + "\\l" + getInstructionsString(block) + "\" shape = \"box\"]");
             if (block.leftBlock != null)
-                file.writeBytes(block.index + " -> " + block.leftBlock.index + "\n");
+                file.writeBytes(block.blockIndex + " -> " + block.leftBlock.blockIndex + "\n");
             if (block.rightBlock != null)
-                file.writeBytes(block.index + " -> " + block.rightBlock.index + "\n");
+                file.writeBytes(block.blockIndex + " -> " + block.rightBlock.blockIndex + "\n");
 
             // Dominator edges
             if (!block.parents.isEmpty()) {
                 if (block.isIfJoin) {
-                    file.writeBytes(block.ifParentBlock.index + " -> " + block.index + dominatorGraphStyle);
+                    file.writeBytes(block.ifParentBlock.blockIndex + " -> " + block.blockIndex + dominatorGraphStyle);
                 } else {
-                    file.writeBytes(block.parents.get(0).index + " -> " + block.index + dominatorGraphStyle);
+                    file.writeBytes(block.parents.get(0).blockIndex + " -> " + block.blockIndex + dominatorGraphStyle);
                 }
             }
         }

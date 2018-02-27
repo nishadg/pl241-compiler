@@ -150,7 +150,7 @@ public class RParser {
         if(parent.getInstructionList().size() != 0){
             parent = converter.createChildOfCurrentBlock();
         }
-        BasicBlock leftBlock = converter.createLeftBlockFor(parent);
+        BasicBlock leftBlock = converter.createLeftBlockFor(parent, false);
         BasicBlock rightBlock = converter.createRightBlockFor(parent);
         BasicBlock joinBlock = converter.createWhileJoinBlock();
         converter.setCurrentBlock(joinBlock);
@@ -175,6 +175,8 @@ public class RParser {
         ssaManager.leftBranch = parentBranch;
         ssaManager.addPhiForWhile(converter, joinBlock);
 
+        //TODO : check CSE with new phi values.
+
         // fix branch addresses
         leftBlock.getLastInstruction().setX(joinBlock);
         joinBlock.getLastInstruction().setY(rightBlock);
@@ -185,7 +187,7 @@ public class RParser {
 
     private void parseIfStatement() {
         BasicBlock parent = converter.getCurrentBlock();
-        BasicBlock leftBlock = converter.createLeftBlockFor(parent);
+        BasicBlock leftBlock = converter.createLeftBlockFor(parent, false);
         BasicBlock joinBlock;
 
         // Parse condition
