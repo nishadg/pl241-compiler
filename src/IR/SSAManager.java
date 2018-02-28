@@ -3,7 +3,6 @@ package IR;
 import Model.BasicBlock;
 import Model.Instruction;
 import Model.Variable;
-import javafx.scene.chart.ValueAxis;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -117,17 +116,23 @@ public class SSAManager {
             addValueInstance(newVar, converter.getCurrentBlock());
 
             // update uses with new value instance
-            updateUses(newVar, useChain, resetLocation);
+            List<Variable> newUseChain = varDefUseChain.get(newVar);
+            newUseChain.addAll(updateUses(newVar, useChain, resetLocation));
         }
     }
 
-    private void updateUses(Variable newVar, List<Variable> useChain, int resetLocation) {
-        for (Variable use : useChain) {
-            if (use.useLocation >= resetLocation) {
-                if (use.useLocation != newVar.assignmentLocation.number){
-                    use.assignmentLocation = newVar.assignmentLocation;
-                }
+    private List<Variable> updateUses(Variable newVar, List<Variable> useChain, int resetLocation) {
+        List<Variable> newUseList = new ArrayList<>();
+        for (int i = 0; i < useChain.size(); i++) {
+            Variable use = useChain.get(i);
+            if (use.useLocation >= resetLocation && // change only uses after phi
+                    use.useLocation != newVar.assignmentLocation.number) { // don't change the phi itself
+                useChain.remove(i);
+                use.assignmentLocation = newVar.assignmentLocation;
+                newUseList.add(use);
+                i--; // removed element
             }
         }
+        return newUseList;
     }
 }
