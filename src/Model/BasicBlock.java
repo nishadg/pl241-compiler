@@ -161,8 +161,7 @@ public class BasicBlock extends Result {
 
     private void inheritAndSearchAgain(BasicBlock parent, BasicBlock join) {
         inheritAnchor(parent);
-        for (Instruction i :
-                instructionList) {
+        for (Instruction i : instructionList) {
             searchInAnchor(i);
         }
         if (leftBlock == join) return;

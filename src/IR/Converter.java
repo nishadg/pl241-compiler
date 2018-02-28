@@ -32,6 +32,11 @@ public class Converter {
             Constant c = (Constant) x;
             x = c.compute(op, y);
         } else {
+            if(x.kind == CONST && (op == Token.plusToken || op == Token.timesToken)){ // swap to use immediate operations
+                Result temp = x;
+                x = y;
+                y = temp;
+            }
             x = load(x);
             Instruction i;
             if (y.kind != Kind.CONST) {

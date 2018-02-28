@@ -51,7 +51,8 @@ public class Variable extends Result {
     public boolean equals(Object obj) {
         if (obj instanceof Variable) {
             Variable v = (Variable) obj;
-            return this.id == v.id && this.assignmentLocation == v.assignmentLocation;
+            return !this.isFunction && !v.isFunction && // function calls cannot be compared
+                    this.id == v.id && this.assignmentLocation == v.assignmentLocation;
         }
         return false;
     }
