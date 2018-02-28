@@ -108,9 +108,9 @@ public class Instruction extends Result {
         this.y = y;
     }
 
-    public void propagateCopy(Result y) {
+    public void propagateCopy(Result x) {
         isDeleted = true;
         deletedBecause = DeleteReason.CP;
-        replacementInstruction = (Instruction) y;
+        replacementInstruction = (Instruction) x;
     }
 }

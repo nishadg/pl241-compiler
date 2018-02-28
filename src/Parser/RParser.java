@@ -175,7 +175,8 @@ public class RParser {
         ssaManager.leftBranch = parentBranch;
         ssaManager.addPhiForWhile(converter, joinBlock);
 
-        //TODO : check CSE with new phi values.
+        // check CSE with new phi values.
+        joinBlock.recheckAnchors();
 
         // fix branch addresses
         leftBlock.getLastInstruction().setX(joinBlock);

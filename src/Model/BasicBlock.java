@@ -60,6 +60,7 @@ public class BasicBlock extends Result {
 
     public Instruction addInstructionToStart(Instruction i) {
         assert i.op == Operation.phi;
+        addToAnchor(i);
         instructionList.add(0, i);
         i.containingBlock = this;
         return i;
@@ -101,7 +102,7 @@ public class BasicBlock extends Result {
     public void addToAnchor(Instruction i) {
         Operation anchorOp = i.op;
         if (!Operation.nonAnchored.contains(i.op)) {
-            if (i.op == Operation.store) {  // killing inanchors
+            if (i.op == Operation.store || i.op == Operation.phi) {  // killing inanchors
                 anchorOp = Operation.load;
             }
             if (!anchor.containsKey(anchorOp)) anchor.put(anchorOp, new ArrayList<>());
@@ -126,6 +127,10 @@ public class BasicBlock extends Result {
                     if (anchoredInstruction.op == Operation.store && anchoredInstruction.y.equals(i.x)) {
                         i.propagateCopy(anchoredInstruction.x);
                         break;
+                    } else if (anchoredInstruction.op == Operation.phi &&
+                            (anchoredInstruction.y.equals(i.x) || anchoredInstruction.x.equals(i.x))) {
+                        i.propagateCopy(anchoredInstruction.x);
+                        break;
                     } else if (i.x.equals(anchoredInstruction.x)) {
                         index = anchorIndex;
                         break;
@@ -148,5 +153,32 @@ public class BasicBlock extends Result {
 
     public void initAnchor() {
         anchor = new HashMap<>();
+    }
+
+    public void recheckAnchors() {
+        leftBlock.inheritAndSearchAgain(this, this);
+    }
+
+    private void inheritAndSearchAgain(BasicBlock parent, BasicBlock join) {
+        inheritAnchor(parent);
+        for (Instruction i :
+                instructionList) {
+            searchInAnchor(i);
+        }
+        if (leftBlock == join) return;
+        if (leftBlock != null) {
+            if (leftBlock.isWhileJoin)
+                leftBlock.recheckAnchors();
+            else if (leftBlock.isIfJoin)
+                leftBlock.inheritAndSearchAgain(leftBlock.ifParentBlock, join);
+            else
+                leftBlock.inheritAndSearchAgain(this, join);
+        }
+        if (rightBlock != null) {
+            if (rightBlock.isIfJoin)
+                rightBlock.inheritAndSearchAgain(rightBlock.ifParentBlock, join);
+            else
+                rightBlock.inheritAndSearchAgain(this, join);
+        }
     }
 }
