@@ -41,6 +41,14 @@ public enum ScopeManager {
         return (foundVars.size() == 0) ? null : foundVars.get(0);
     }
 
+    public boolean isVarGlobal(Variable v) {
+        List<Variable> globalVars = scopeVarMap.get(MAIN_SCOPE);
+        for (Variable globalVar : globalVars) {
+            if (globalVar.getId() == v.getId()) return true;
+        }
+        return false;
+    }
+
     public int getID(String varName) {
         Variable v = findTokenInScope(varName);
         assert v != null;

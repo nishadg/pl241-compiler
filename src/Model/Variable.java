@@ -1,5 +1,7 @@
 package Model;
 
+import IR.ScopeManager;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -73,5 +75,9 @@ public class Variable extends Result {
         Variable v = new Variable(id, name);
         v.dimensions = new ArrayList<>();
         return v;
+    }
+
+    public boolean isGlobal() {
+        return ScopeManager.INSTANCE.isVarGlobal(this);
     }
 }

@@ -232,6 +232,7 @@ public class Converter {
     }
 
     public Instruction callFunction(Variable functionName) {
+
         return currentBlock.addInstruction(new Instruction(Operation.call, functionName));
     }
 

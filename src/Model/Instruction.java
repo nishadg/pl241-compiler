@@ -66,7 +66,7 @@ public class Instruction extends Result {
             while (originalValue.isDeleted) {
                 originalValue = originalValue.replacementInstruction;
             }
-            return  "(" + originalValue.number + ")";
+            return "(" + originalValue.number + ")";
         } else
             return "(" + number + ")";
     }
@@ -87,6 +87,11 @@ public class Instruction extends Result {
         boolean xIsSame = (this.x == null && x == null) || this.x.equals(x);
         boolean yIsSame = (this.y == null && y == null) || this.y.equals(y);
         return xIsSame && yIsSame;
+    }
+
+    public boolean containsGlobals() {
+        return (x != null && x.kind == Kind.VAR && ((Variable) x).isGlobal())
+                || (y != null && y.kind == Kind.VAR && ((Variable) y).isGlobal());
     }
 
     public String outputString() {

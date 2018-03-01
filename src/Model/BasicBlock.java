@@ -102,7 +102,7 @@ public class BasicBlock extends Result {
     public void addToAnchor(Instruction i) {
         Operation anchorOp = i.op;
         if (!Operation.nonAnchored.contains(i.op)) {
-            if (i.op == Operation.store || i.op == Operation.phi) {  // killing inanchors
+            if (i.op == Operation.store || i.op == Operation.phi || i.op == Operation.call) {  // killing inanchors
                 anchorOp = Operation.load;
             }
             if (!anchor.containsKey(anchorOp)) anchor.put(anchorOp, new ArrayList<>());
@@ -124,7 +124,9 @@ public class BasicBlock extends Result {
                 List<Instruction> instructions = anchor.get(Operation.load);
                 for (int anchorIndex = instructions.size() - 1; anchorIndex >= 0; anchorIndex--) {
                     Instruction anchoredInstruction = instructions.get(anchorIndex);
-                    if (anchoredInstruction.op == Operation.store && anchoredInstruction.y.equals(i.x)) {
+                    if (anchoredInstruction.op == Operation.call && i.containsGlobals()) {
+                        break;
+                    } else if (anchoredInstruction.op == Operation.store && anchoredInstruction.y.equals(i.x)) {
                         i.propagateCopy(anchoredInstruction.x);
                         break;
                     } else if (anchoredInstruction.op == Operation.phi &&
