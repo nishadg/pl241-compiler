@@ -14,8 +14,8 @@ public class ParserTest {
     public static void main(String args[]) {
 //        readFile();
 //        scanFile();
-//        parseAllFiles();
-        parseFile("global.txt");
+        parseAllFiles();
+//        parseFile("global.txt");
     }
 
     private static void parseFile(String fileName) {
