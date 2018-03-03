@@ -89,6 +89,7 @@ public class Converter {
         Instruction moveInstruction = new Instruction(Operation.move, y, x);
         Instruction storedAtLocation = currentBlock.addInstruction(moveInstruction);
         moveInstruction.propagateCopy(y);
+        if (x.kind == VAR) ((Variable) x).valueLocation = storedAtLocation;
         return currentBlock.addInstruction(new Instruction(Operation.store, storedAtLocation, x));
 //        }
     }

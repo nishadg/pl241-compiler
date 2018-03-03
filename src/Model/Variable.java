@@ -15,6 +15,7 @@ public class Variable extends Result {
     public Instruction assignmentLocation;
     public int useLocation;
     public boolean isFunction;
+    public Instruction valueLocation;
 
     public int getId() {
         return id;
@@ -46,7 +47,7 @@ public class Variable extends Result {
                 indexString.append(assignmentLocation.number);
             }
         }
-        return name + indexString;
+        return name + indexString + valueLocation;
     }
 
     @Override
@@ -68,6 +69,7 @@ public class Variable extends Result {
         Variable v = new Variable(this.getId(), this.name);
         v.dimensions = new ArrayList<>(this.dimensions);
         v.assignmentLocation = this.assignmentLocation;
+        v.valueLocation = this.valueLocation;
         return v;
     }
 
