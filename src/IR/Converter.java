@@ -94,7 +94,7 @@ public class Converter {
 //        }
     }
 
-    public Instruction phi(Variable old, Variable left, Variable right) {
+    public Instruction ifPhi(Variable old, Variable left, Variable right) {
         Instruction i = new Instruction(Operation.phi, left, right);
         i.setPhiInstruction(old);
         return currentBlock.addInstruction(i);
