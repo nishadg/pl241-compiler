@@ -1,13 +1,22 @@
 package Model;
 
-import IR.Converter;
+import static Model.Instruction.DeleteReason.DCE;
 
 public class Instruction extends Result {
+    public Instruction getValueLocation() {
+        return isDeleted && deletedBecause != DCE ? replacementInstruction.getValueLocation() : this;
+    }
+
     public enum DeleteReason {
-        CSE, CP
+        CSE, CP, DCE
     }
 
     DeleteReason deletedBecause;
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
     boolean isDeleted;
     Instruction replacementInstruction;
 
@@ -18,12 +27,25 @@ public class Instruction extends Result {
     private static int counter = 0;
     Operation op;
 
+    Result x;
+    Result y;
+
     public void setX(Result x) {
         this.x = x;
     }
 
-    Result x;
-    Result y;
+    public void setY(BasicBlock y) {
+        this.y = y;
+    }
+
+    public Result getX() {
+        return x;
+    }
+
+    public Result getY() {
+        return y;
+    }
+
 
     public int number;
     boolean isPhiInstruction;
@@ -62,11 +84,7 @@ public class Instruction extends Result {
     @Override
     public String toString() {
         if (isDeleted) {
-            Instruction originalValue = this;
-            while (originalValue.isDeleted) {
-                originalValue = originalValue.replacementInstruction;
-            }
-            return "(" + originalValue.number + ")";
+            return "(" + getValueLocation().number + ")";
         } else
             return "(" + number + ")";
     }
@@ -96,7 +114,11 @@ public class Instruction extends Result {
 
     public String outputString() {
         if (isDeleted) {
-            return number + ": " + replacementInstruction.toString() + " - " + deletedBecause;
+            if (replacementInstruction != null) {
+                return number + ": " + replacementInstruction.toString() + " - " + deletedBecause;
+            } else {
+                return number + ": " + deletedBecause;
+            }
         }
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(number).append(": ");
@@ -109,13 +131,23 @@ public class Instruction extends Result {
         return stringBuilder.toString();
     }
 
-    public void setY(BasicBlock y) {
-        this.y = y;
-    }
-
     public void propagateCopy(Result x) {
         isDeleted = true;
         deletedBecause = DeleteReason.CP;
         replacementInstruction = (Instruction) x;
     }
+
+    public void kill() {
+        switch (op) {
+            case write:
+            case writeNL:
+            case end:
+                // do nothing
+                break;
+            default:
+                isDeleted = true;
+                deletedBecause = DCE;
+        }
+    }
+
 }

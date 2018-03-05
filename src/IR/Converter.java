@@ -89,7 +89,7 @@ public class Converter {
         Instruction moveInstruction = new Instruction(Operation.move, y, x);
         Instruction storedAtLocation = currentBlock.addInstruction(moveInstruction);
         moveInstruction.propagateCopy(y);
-        if (x.kind == VAR) ((Variable) x).valueLocation = storedAtLocation;
+        if (x.kind == VAR) ((Variable) x).valueLocation = storedAtLocation.getValueLocation();
         return currentBlock.addInstruction(new Instruction(Operation.store, storedAtLocation, x));
 //        }
     }
@@ -144,7 +144,9 @@ public class Converter {
 
     public void end() {
         currentBlock.addInstruction(new Instruction(Operation.end));
-        CFG.INSTANCE.createDotFile();
+    }
+
+    public void finish() {
         CFG.INSTANCE.graphs = new ArrayList<>();
         BasicBlock.resetCounter();
         Instruction.resetCounter();

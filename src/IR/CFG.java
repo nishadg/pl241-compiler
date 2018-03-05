@@ -3,14 +3,18 @@ package IR;
 import Model.BasicBlock;
 import test.DotGenerator;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.List;
 
 public enum CFG {
     INSTANCE;
-    ArrayList<ArrayList<BasicBlock>> graphs = new ArrayList<>();
+
+    public List<List<BasicBlock>> getGraphs() {
+        return graphs;
+    }
+
+    List<List<BasicBlock>> graphs = new ArrayList<>();
     private ArrayList<BasicBlock> currentGraph;
     private String name;
 
@@ -20,7 +24,7 @@ public enum CFG {
     }
 
     public BasicBlock resetCurrentGraphToMain() {
-        currentGraph = graphs.get(0);
+        currentGraph = (ArrayList<BasicBlock>) graphs.get(0);
         return currentGraph.get(0);
     }
 

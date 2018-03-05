@@ -5,6 +5,7 @@ import IR.Converter;
 import IR.SSAManager;
 import IR.ScopeManager;
 import Model.*;
+import RA.RegisterAllocator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ public class RParser {
     private RScanner rScanner;
     private SSAManager ssaManager;
     private Converter converter;
+    RegisterAllocator registerAllocator = new RegisterAllocator();
     private int sym; // the current token on the input
 
     public RParser(String fileName) throws IOException {
@@ -23,6 +25,14 @@ public class RParser {
         converter = new Converter();
         ssaManager = new SSAManager();
         CFG.INSTANCE.setName(fileName);
+    }
+
+    public void compile(){
+        parse();
+        registerAllocator.allocate();
+        //TODO: convert to machine code
+        CFG.INSTANCE.createDotFile();
+        converter.finish();
     }
 
     public void parse() {

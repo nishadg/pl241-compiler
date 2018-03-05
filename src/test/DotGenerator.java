@@ -19,7 +19,7 @@ public class DotGenerator {
         this.fileName = name.substring(name.lastIndexOf('/') + 1, name.lastIndexOf('.'));
     }
 
-    private void generateGraph(ArrayList<BasicBlock> graph, String name) throws IOException {
+    private void generateGraph(List<BasicBlock> graph, String name) throws IOException {
         for (BasicBlock block : graph) {
             String blockLabel = "";
             if (block.isWhileJoin) blockLabel = "While ";
@@ -55,11 +55,11 @@ public class DotGenerator {
         f.delete();
     }
 
-    public void generateCFG(ArrayList<ArrayList<BasicBlock>> graphs) throws IOException {
+    public void generateCFG(List<List<BasicBlock>> graphs) throws IOException {
         deleteOld();
         file = new RandomAccessFile(getPath(fileName), "rw");
         file.writeBytes("digraph " + fileName + "{");
-        for (ArrayList<BasicBlock> graph : graphs) {
+        for (List<BasicBlock> graph : graphs) {
             generateGraph(graph, graph.get(0).name);
         }
         file.writeBytes("\n}");

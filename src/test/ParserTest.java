@@ -22,7 +22,7 @@ public class ParserTest {
         RParser p = null;
         try {
             p = new RParser(PATH.concat(fileName));
-            p.parse();
+            p.compile();
         } catch (IOException e) {
             e.printStackTrace();
         }
