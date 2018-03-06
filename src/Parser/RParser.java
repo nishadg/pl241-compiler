@@ -5,7 +5,7 @@ import IR.Converter;
 import IR.SSAManager;
 import IR.ScopeManager;
 import Model.*;
-import RA.RegisterAllocator;
+import RA.InterferenceGraphBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ public class RParser {
     private RScanner rScanner;
     private SSAManager ssaManager;
     private Converter converter;
-    RegisterAllocator registerAllocator = new RegisterAllocator();
+    InterferenceGraphBuilder interferenceGraphBuilder = new InterferenceGraphBuilder();
     private int sym; // the current token on the input
 
     public RParser(String fileName) throws IOException {
@@ -29,7 +29,7 @@ public class RParser {
 
     public void compile(){
         parse();
-        registerAllocator.allocate();
+        interferenceGraphBuilder.allocate();
         //TODO: convert to machine code
         CFG.INSTANCE.createDotFile();
         converter.finish();

@@ -5,13 +5,14 @@ import Model.*;
 
 import java.util.*;
 
-public class RegisterAllocator {
+public class InterferenceGraphBuilder {
     HashMap<Integer, List<Integer>> interferenceGraph = new HashMap<>();
     Set<Integer> liveValues = new HashSet<>();
 
+
     public void buildInterferenceGraph(List<List<BasicBlock>> CFG) {
-        for (List<BasicBlock> functionBlocks : CFG) {
-            addToGraph(functionBlocks.get(functionBlocks.size() - 1));
+        for (List<BasicBlock> functionBlockList : CFG) {
+            addToGraph(functionBlockList.get(functionBlockList.size() - 1));
         }
     }
 
@@ -24,6 +25,13 @@ public class RegisterAllocator {
             addToLive(currentInstruction.getX());
             addToLive(currentInstruction.getY());
         }
+        if(lastBlock.parents.size() > 0){
+            addToGraph(lastBlock.parents.get(0));
+            if(lastBlock.parents.size() > 1 && lastBlock.parents.get(1) != lastBlock.ifParentBlock){
+                addToGraph(lastBlock.parents.get(1));
+            }
+        }
+
     }
 
     private void removeFromLive(Instruction currentInstruction) {
