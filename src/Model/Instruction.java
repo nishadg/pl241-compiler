@@ -48,7 +48,7 @@ public class Instruction extends Result {
 
 
     public int number;
-    boolean isPhiInstruction;
+    public boolean isPhiInstruction;
     Variable phiVar;
     BasicBlock containingBlock;
 
@@ -140,6 +140,13 @@ public class Instruction extends Result {
     public void kill() {
         switch (op) {
             case write:
+            case bra:
+            case ble:
+            case bge:
+            case bgt:
+            case blt:
+            case bne:
+            case beq:
             case writeNL:
             case end:
                 // do nothing

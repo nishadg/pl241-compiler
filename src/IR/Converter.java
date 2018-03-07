@@ -197,6 +197,7 @@ public class Converter {
         BasicBlock joinBlock = BasicBlock.create();
         joinBlock.isIfJoin = true;
         joinBlock.ifParentBlock = parent;
+        parent.isIfParent = true;
         leftBlock.leftBlock = joinBlock;
         if (rightBlock.leftBlock == null) // check else/fallthrough
             rightBlock.leftBlock = joinBlock;

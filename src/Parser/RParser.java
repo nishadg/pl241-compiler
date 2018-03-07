@@ -17,7 +17,7 @@ public class RParser {
     private RScanner rScanner;
     private SSAManager ssaManager;
     private Converter converter;
-    InterferenceGraphBuilder interferenceGraphBuilder = new InterferenceGraphBuilder();
+    private InterferenceGraphBuilder interferenceGraphBuilder;
     private int sym; // the current token on the input
 
     public RParser(String fileName) throws IOException {
@@ -25,6 +25,7 @@ public class RParser {
         converter = new Converter();
         ssaManager = new SSAManager();
         CFG.INSTANCE.setName(fileName);
+        interferenceGraphBuilder = new InterferenceGraphBuilder(fileName);
     }
 
     public void compile(){

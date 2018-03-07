@@ -31,6 +31,10 @@ public class BasicBlock extends Result {
     // CSE fields
     HashMap<Operation, List<Instruction>> anchor = new HashMap<>();
 
+    // RA fields
+    public boolean isIfParent, leftTreeParsed;
+    public HashSet<Integer> leftLiveValues;
+
     private BasicBlock() {
         super(Kind.ADDR);
         blockIndex = counter++;
@@ -130,8 +134,9 @@ public class BasicBlock extends Result {
                         i.propagateCopy(anchoredInstruction.x);
                         break;
                     } else if (anchoredInstruction.op == Operation.phi &&
-                            (anchoredInstruction.y.equals(i.x) || anchoredInstruction.x.equals(i.x))) {
-                        i.propagateCopy(anchoredInstruction.x);
+                            (anchoredInstruction.y.equals(i.x) || anchoredInstruction.x.equals(i.x) ||
+                                    anchoredInstruction.number == ((Variable) i.x).valueLocation.number)) {
+                        i.propagateCopy(anchoredInstruction);
                         break;
                     } else if (i.x.equals(anchoredInstruction.x)) {
                         index = anchorIndex;
