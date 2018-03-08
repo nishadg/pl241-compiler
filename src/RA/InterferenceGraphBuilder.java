@@ -36,9 +36,10 @@ public class InterferenceGraphBuilder {
         // create left and right live values
         Set<Integer> leftLive = new HashSet<>();
         Set<Integer> rightLive = new HashSet<>();
+        Set<Integer> phiLive = new HashSet<>();
 
         // combine live values for if block
-        if (lastBlock.leftLiveValues != null) liveValues.addAll(lastBlock.leftLiveValues);
+        if (lastBlock.otherSubtreeLiveValues != null) liveValues.addAll(lastBlock.otherSubtreeLiveValues);
 
         // parse instructions and add/remove from live values
         List<Instruction> instructionList = lastBlock.getInstructionList();
@@ -46,33 +47,48 @@ public class InterferenceGraphBuilder {
             Instruction currentInstruction = instructionList.get(i);
             if (currentInstruction.isDeleted()) continue;
 
-            removeFromLive(currentInstruction, liveValues);
             if (currentInstruction.isPhiInstruction) {
+                if (lastBlock.isWhileJoin && lastBlock.otherSubtreeParsed) {
+                    removeFromLive(currentInstruction, liveValues);
+                }else{
+//                    addToLive(currentInstruction, phiLive);
+                }
                 addToLive(currentInstruction.getX(), leftLive);
                 addToLive(currentInstruction.getY(), rightLive);
             } else {
+                removeFromLive(currentInstruction, liveValues);
                 addToLive(currentInstruction.getX(), liveValues);
                 addToLive(currentInstruction.getY(), liveValues);
             }
         }
 
-        // recursively call parents
-        if (lastBlock.parents.size() > 0) {
-            BasicBlock parent = lastBlock.parents.get(0);
-            if (parent.isIfParent && !parent.leftTreeParsed) { // if coming from left block store live values in block
-                parent.leftTreeParsed = true;
-                parent.leftLiveValues = new HashSet<>(liveValues);
-            } else {
-                leftLive.addAll(liveValues);
-                addToGraph(parent, leftLive);
-            }
 
-            // parse right parent branch
-            if (lastBlock.parents.size() > 1) {
-                rightLive.addAll(liveValues);
-                addToGraph(lastBlock.parents.get(1), rightLive);
-            }
+        if (lastBlock.parents.isEmpty()) return; // finish on first block
+
+        if (lastBlock.isWhileJoin && !lastBlock.otherSubtreeParsed) { // send right and phi values to loop
+            lastBlock.otherSubtreeParsed = true;
+            rightLive.addAll(liveValues);
+            addToGraph(lastBlock.parents.get(1), rightLive);
+            return;
         }
+
+        // parse parent
+        BasicBlock leftParent = lastBlock.parents.get(0);
+        if (leftParent.isIfParent && !leftParent.otherSubtreeParsed) { // if coming from left block store live values in block
+            leftParent.otherSubtreeParsed = true;
+            leftParent.otherSubtreeLiveValues = new HashSet<>(liveValues);
+        } else {
+            leftLive.addAll(liveValues);
+//            leftLive.removeAll(phiLive);
+            addToGraph(leftParent, leftLive);
+        }
+
+        // parse right parent branch
+        if (lastBlock.isIfJoin) {
+            rightLive.addAll(liveValues);
+            addToGraph(lastBlock.parents.get(1), rightLive);
+        }
+
     }
 
     private void removeFromLive(Instruction currentInstruction, Set<Integer> liveValues) {
@@ -83,32 +99,34 @@ public class InterferenceGraphBuilder {
     }
 
     private void addToLive(Result x, Set<Integer> liveValues) {
-        if (x != null) {
-            int n;
-            if (x.kind == Kind.VAR) {
-                n = ((Variable) x).valueLocation.number;
-            } else if (x.kind == Kind.ADDR) {
-                if (x instanceof BasicBlock) return; // TODO: handle compare statements where argument is a basic block
-                n = ((Instruction) x).getValueLocation().number;
-            } else {
-                return;
-            }
-            for (int i : liveValues) {
-                if (i != n) {
-                    if (interferenceGraph.containsKey(i)){
-                        interferenceGraph.get(i).add(n);
-                    } else if (interferenceGraph.containsKey(n)){
-                        interferenceGraph.get(n).add(i);
-                    }else{
-                        Set<Integer> newNode = new HashSet<>();
-                        interferenceGraph.put(n, newNode);
-                        newNode.add(i);
-                    }
+        if (x == null) return;
+
+        int n;
+        if (x.kind == Kind.VAR) {
+            n = ((Variable) x).getValueLocation().number;
+        } else if (x.kind == Kind.ADDR) {
+            if (x instanceof BasicBlock) return; // TODO: handle compare statements where argument is a basic block
+            n = ((Instruction) x).getValueLocation().number;
+        } else {
+            return;
+        }
+
+        if (n == 0) return; // unassigned values are 0
+        if(!interferenceGraph.containsKey(n)){
+            interferenceGraph.put(n, new HashSet<>());
+        }
+        for (int i : liveValues) {
+            if (i != n) {
+                if (interferenceGraph.containsKey(i)) {
+                    interferenceGraph.get(i).add(n);
+                } else if (interferenceGraph.containsKey(n)) {
+                    interferenceGraph.get(n).add(i);
                 }
             }
-
-            liveValues.add(n);
         }
+
+        liveValues.add(n);
+
     }
 
     public void allocate() {

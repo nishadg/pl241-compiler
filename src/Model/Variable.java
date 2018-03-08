@@ -1,5 +1,6 @@
 package Model;
 
+import IR.CFG;
 import IR.ScopeManager;
 
 import java.util.ArrayList;
@@ -15,7 +16,14 @@ public class Variable extends Result {
     public Instruction assignmentLocation;
     public int useLocation;
     public boolean isFunction;
-    public Instruction valueLocation;
+
+    public Instruction getValueLocation() {
+        return valueLocation == null? CFG.INSTANCE.getFirstInstruction() : valueLocation;
+    }
+
+
+
+    private Instruction valueLocation;
 
     public int getId() {
         return id;
@@ -81,5 +89,9 @@ public class Variable extends Result {
 
     public boolean isGlobal() {
         return ScopeManager.INSTANCE.isVarGlobal(this);
+    }
+
+    public void setValueLocation(Instruction valueLocation) {
+        this.valueLocation = valueLocation;
     }
 }

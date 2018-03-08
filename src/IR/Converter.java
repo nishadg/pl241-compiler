@@ -61,8 +61,12 @@ public class Converter {
             return currentBlock.addInstruction(i);
         } else if (x.kind == CONST) {
             Register r = new Register(0);
-            Instruction i = new Instruction(Operation.addi, r, x);
-            return currentBlock.addInstruction(i);
+            if (((Constant) x).getValue() == 0) {
+                return CFG.INSTANCE.getFirstInstruction();
+            } else {
+                Instruction i = new Instruction(Operation.addi, r, x);
+                return currentBlock.addInstruction(i);
+            }
         } else {
             return x;
         }
@@ -89,7 +93,7 @@ public class Converter {
         Instruction moveInstruction = new Instruction(Operation.move, y, x);
         Instruction storedAtLocation = currentBlock.addInstruction(moveInstruction);
         moveInstruction.propagateCopy(y);
-        if (x.kind == VAR) ((Variable) x).valueLocation = storedAtLocation.getValueLocation();
+        if (x.kind == VAR) ((Variable) x).setValueLocation(storedAtLocation.getValueLocation());
         return currentBlock.addInstruction(new Instruction(Operation.store, storedAtLocation, x));
 //        }
     }

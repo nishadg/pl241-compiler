@@ -84,10 +84,11 @@ public class DotGenerator {
 
         // create new
         RandomAccessFile iFile = new RandomAccessFile(getCFGPath(fileName + "i"), "rw");
-        iFile.writeBytes("graph " + fileName + "{\n");
+        iFile.writeBytes("strict graph " + fileName + "{\n");
 
 
         for (Map.Entry<Integer, Set<Integer>> entry : interferenceGraph.entrySet()) {
+            iFile.writeBytes(entry.getKey() + "\n");
             for (int i : entry.getValue()) {
                 iFile.writeBytes(entry.getKey() + " -- " + i + "\n");
             }

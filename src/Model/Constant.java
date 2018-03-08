@@ -3,6 +3,10 @@ package Model;
 import Parser.Token;
 
 public class Constant extends Result {
+    public int getValue() {
+        return value;
+    }
+
     int value;
 
     public Constant(int value) {

@@ -1,6 +1,7 @@
 package IR;
 
 import Model.BasicBlock;
+import Model.Instruction;
 import test.DotGenerator;
 
 import java.io.IOException;
@@ -44,5 +45,9 @@ public enum CFG {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Instruction getFirstInstruction() {
+        return getGraphs().get(0).get(0).getInstructionList().get(0);
     }
 }

@@ -83,7 +83,7 @@ public class SSAManager {
             }
             Variable newVar = phi.old.copy();
             newVar.assignmentLocation = converter.ifPhi(newVar, phi.left, phi.right);
-            newVar.valueLocation = newVar.assignmentLocation;
+            newVar.setValueLocation(newVar.assignmentLocation);
 
             // add the left and right phi to use chains
             addPhiToUseChain(phi.left, newVar);
@@ -108,7 +108,7 @@ public class SSAManager {
             Variable newVar = phi.old.copy();
             List<Variable> useChain = varDefUseChain.get(newVar);
             newVar.assignmentLocation = converter.whilePhi(newVar, phi.old, phi.right);
-            newVar.valueLocation = newVar.assignmentLocation;
+            newVar.setValueLocation(newVar.assignmentLocation);
 
             // add the left and right phi to use chains
             addPhiToUseChain(phi.old, newVar);
@@ -131,6 +131,7 @@ public class SSAManager {
                     use.useLocation != newVar.assignmentLocation.number) { // don't change the phi itself
                 useChain.remove(i);
                 use.assignmentLocation = newVar.assignmentLocation;
+                use.setValueLocation(newVar.getValueLocation());
                 newUseList.add(use);
                 i--; // removed element
             }

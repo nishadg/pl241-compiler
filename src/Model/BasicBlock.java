@@ -32,8 +32,8 @@ public class BasicBlock extends Result {
     HashMap<Operation, List<Instruction>> anchor = new HashMap<>();
 
     // RA fields
-    public boolean isIfParent, leftTreeParsed;
-    public HashSet<Integer> leftLiveValues;
+    public boolean isIfParent, otherSubtreeParsed;
+    public HashSet<Integer> otherSubtreeLiveValues;
 
     private BasicBlock() {
         super(Kind.ADDR);
@@ -133,9 +133,9 @@ public class BasicBlock extends Result {
                     } else if (anchoredInstruction.op == Operation.store && anchoredInstruction.y.equals(i.x)) {
                         i.propagateCopy(anchoredInstruction.x);
                         break;
-                    } else if (anchoredInstruction.op == Operation.phi &&
-                            (anchoredInstruction.y.equals(i.x) || anchoredInstruction.x.equals(i.x) ||
-                                    anchoredInstruction.number == ((Variable) i.x).valueLocation.number)) {
+                    } else if (anchoredInstruction.op == Operation.phi && i.x.kind == Kind.VAR &&
+                            ((anchoredInstruction.number == ((Variable) i.x).getValueLocation().number) ||
+                                    anchoredInstruction.number == ((Variable) i.x).assignmentLocation.number)) {
                         i.propagateCopy(anchoredInstruction);
                         break;
                     } else if (i.x.equals(anchoredInstruction.x)) {
