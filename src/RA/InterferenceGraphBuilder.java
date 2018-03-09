@@ -9,6 +9,7 @@ import java.util.*;
 
 public class InterferenceGraphBuilder {
     HashMap<Integer, Set<Integer>> interferenceGraph = new HashMap<>();
+    HashMap<Integer, Set<Integer>> phiCluster = new HashMap<>();
     private String name;
 
     public InterferenceGraphBuilder(String name) {
@@ -48,13 +49,17 @@ public class InterferenceGraphBuilder {
             if (currentInstruction.isDeleted()) continue;
 
             if (currentInstruction.isPhiInstruction) {
-                if (lastBlock.isWhileJoin && lastBlock.otherSubtreeParsed) {
-                    removeFromLive(currentInstruction, liveValues);
-                }else{
-//                    addToLive(currentInstruction, phiLive);
+                addToPhiCluster(currentInstruction);
+                boolean isKilled = false;
+                if ((lastBlock.isWhileJoin && lastBlock.otherSubtreeParsed) || lastBlock.isIfJoin) {
+                    isKilled = removeFromLive(currentInstruction, liveValues);
+                } else {
+                    addToLive(currentInstruction, phiLive);
                 }
-                addToLive(currentInstruction.getX(), leftLive);
-                addToLive(currentInstruction.getY(), rightLive);
+                if (!isKilled) {
+                    addToLive(currentInstruction.getX(), leftLive);
+                    addToLive(currentInstruction.getY(), rightLive);
+                }
             } else {
                 removeFromLive(currentInstruction, liveValues);
                 addToLive(currentInstruction.getX(), liveValues);
@@ -68,6 +73,7 @@ public class InterferenceGraphBuilder {
         if (lastBlock.isWhileJoin && !lastBlock.otherSubtreeParsed) { // send right and phi values to loop
             lastBlock.otherSubtreeParsed = true;
             rightLive.addAll(liveValues);
+            rightLive.addAll(phiLive);
             addToGraph(lastBlock.parents.get(1), rightLive);
             return;
         }
@@ -91,32 +97,48 @@ public class InterferenceGraphBuilder {
 
     }
 
-    private void removeFromLive(Instruction currentInstruction, Set<Integer> liveValues) {
-        if (liveValues.contains(currentInstruction.number))
+    private void addToPhiCluster(Instruction currentInstruction) {
+        Set<Integer> cluster = new HashSet<>();
+
+        addToCluster(currentInstruction, cluster);
+        addToCluster(currentInstruction.getX(), cluster);
+        addToCluster(currentInstruction.getY(), cluster);
+    }
+
+    private void addToCluster(Result currentInstruction, Set<Integer> cluster) {
+        int valueNumber = getValueNumber(currentInstruction);
+        if (valueNumber != 0) {
+            if (phiCluster.containsKey(valueNumber)) {
+                cluster.addAll(phiCluster.get(valueNumber));
+            }
+            cluster.add(valueNumber);
+            phiCluster.put(valueNumber, cluster);
+        }
+    }
+
+    private boolean removeFromLive(Instruction currentInstruction, Set<Integer> liveValues) {
+        if (liveValues.contains(currentInstruction.number)) {
             liveValues.remove(currentInstruction.number);
-        else
+            return false;
+        } else {
             currentInstruction.kill();
+            return true;
+        }
     }
 
     private void addToLive(Result x, Set<Integer> liveValues) {
         if (x == null) return;
 
-        int n;
-        if (x.kind == Kind.VAR) {
-            n = ((Variable) x).getValueLocation().number;
-        } else if (x.kind == Kind.ADDR) {
-            if (x instanceof BasicBlock) return; // TODO: handle compare statements where argument is a basic block
-            n = ((Instruction) x).getValueLocation().number;
-        } else {
-            return;
-        }
+        int n = getValueNumber(x);
 
         if (n == 0) return; // unassigned values are 0
-        if(!interferenceGraph.containsKey(n)){
+
+        if (!interferenceGraph.containsKey(n)) {
             interferenceGraph.put(n, new HashSet<>());
         }
+
         for (int i : liveValues) {
-            if (i != n) {
+            if (i != n && !inSamePhiCluster(i, n)) {
                 if (interferenceGraph.containsKey(i)) {
                     interferenceGraph.get(i).add(n);
                 } else if (interferenceGraph.containsKey(n)) {
@@ -127,6 +149,26 @@ public class InterferenceGraphBuilder {
 
         liveValues.add(n);
 
+    }
+
+    private boolean inSamePhiCluster(int i, int n) {
+        if (phiCluster.containsKey(i)) {
+            return phiCluster.get(i).contains(n);
+        } else if (phiCluster.containsKey(n)) {
+            return phiCluster.get(n).contains(i);
+        }
+        return false;
+    }
+
+    private int getValueNumber(Result x) {
+        if (x.kind == Kind.VAR) {
+            return ((Variable) x).getValueLocation().number;
+        } else if (x.kind == Kind.ADDR) {
+            if (x instanceof BasicBlock) return 0; // TODO: handle compare statements where argument is a basic block
+            return ((Instruction) x).getValueLocation().number;
+        } else {
+            return 0;
+        }
     }
 
     public void allocate() {
