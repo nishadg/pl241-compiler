@@ -16,6 +16,7 @@ public class Variable extends Result {
     public Instruction assignmentLocation;
     public int useLocation;
     public boolean isFunction;
+    private List<Result> parameters;
 
     public Instruction getValueLocation() {
         return valueLocation == null? CFG.INSTANCE.getFirstInstruction() : valueLocation;
@@ -54,8 +55,11 @@ public class Variable extends Result {
             } else {
                 indexString.append(assignmentLocation.number);
             }
+            indexString.append(valueLocation);
+        }else{
+            indexString.append(parameters);
         }
-        return name + indexString + valueLocation;
+        return name + indexString;
     }
 
     @Override
@@ -93,5 +97,11 @@ public class Variable extends Result {
 
     public void setValueLocation(Instruction valueLocation) {
         this.valueLocation = valueLocation;
+    }
+
+    public void addParams(List<Result> params) {
+        assert isFunction;
+
+        this.parameters = params;
     }
 }

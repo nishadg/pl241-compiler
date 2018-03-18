@@ -9,6 +9,7 @@ import java.util.*;
 
 public class InterferenceGraphBuilder {
     HashMap<Integer, Set<Integer>> interferenceGraph = new HashMap<>();
+    HashMap<Integer, Integer> instructionColors;
     HashMap<Integer, Set<Integer>> phiCluster = new HashMap<>();
     private String name;
 
@@ -21,13 +22,14 @@ public class InterferenceGraphBuilder {
         for (List<BasicBlock> functionBlockList : CFG) {
             addToGraph(functionBlockList.get(functionBlockList.size() - 1), new HashSet<>());
         }
+        instructionColors = new Allocator(interferenceGraph, phiCluster).colorGraph();
         createDotFile();
     }
 
     private void createDotFile() {
         try {
             DotGenerator dotGenerator = new DotGenerator(name);
-            dotGenerator.generateInterference(interferenceGraph);
+            dotGenerator.generateInterference(interferenceGraph, instructionColors);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -46,6 +48,8 @@ public class InterferenceGraphBuilder {
         List<Instruction> instructionList = lastBlock.getInstructionList();
         for (int i = instructionList.size() - 1; i >= 0; i--) {
             Instruction currentInstruction = instructionList.get(i);
+
+            if(currentInstruction.number == 0) continue;
             if (currentInstruction.isDeleted()) continue;
 
             if (currentInstruction.isPhiInstruction) {
@@ -141,7 +145,8 @@ public class InterferenceGraphBuilder {
             if (i != n && !inSamePhiCluster(i, n)) {
                 if (interferenceGraph.containsKey(i)) {
                     interferenceGraph.get(i).add(n);
-                } else if (interferenceGraph.containsKey(n)) {
+                }
+                if (interferenceGraph.containsKey(n)) {
                     interferenceGraph.get(n).add(i);
                 }
             }

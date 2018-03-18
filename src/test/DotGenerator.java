@@ -15,6 +15,8 @@ public class DotGenerator {
 
     private String fileName;
     private RandomAccessFile file;
+    private static String[] colors = new String[]{"skyblue", "violetred", "goldenrod", "royalblue", "crimson",
+            "yellow", "darkolivegreen4", "deeppink", "gray60"};
 
     public DotGenerator(String name) {
         this.fileName = name.substring(name.lastIndexOf('/') + 1, name.lastIndexOf('.'));
@@ -77,7 +79,7 @@ public class DotGenerator {
         return str.toString();
     }
 
-    public void generateInterference(HashMap<Integer, Set<Integer>> interferenceGraph) throws IOException {
+    public void generateInterference(HashMap<Integer, Set<Integer>> interferenceGraph, HashMap<Integer, Integer> instructionColors) throws IOException {
         // delete old
         File f = new File(getCFGPath(fileName + "i"));
         f.delete();
@@ -88,7 +90,9 @@ public class DotGenerator {
 
 
         for (Map.Entry<Integer, Set<Integer>> entry : interferenceGraph.entrySet()) {
-            iFile.writeBytes(entry.getKey() + "\n");
+            int colorIndex = instructionColors.get(entry.getKey());
+            if(colorIndex > 8) colorIndex = 8;
+            iFile.writeBytes(entry.getKey() + " [style=filled fillcolor = " + colors[colorIndex] + "]\n");
             for (int i : entry.getValue()) {
                 iFile.writeBytes(entry.getKey() + " -- " + i + "\n");
             }

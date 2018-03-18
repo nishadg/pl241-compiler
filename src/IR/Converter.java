@@ -239,9 +239,9 @@ public class Converter {
         return child;
     }
 
-    public Instruction callFunction(Variable functionName) {
-
-        return currentBlock.addInstruction(new Instruction(Operation.call, functionName));
+    public Instruction callFunction(Variable function, List<Result> params) {
+        function.addParams(params);
+        return currentBlock.addInstruction(new Instruction(Operation.call, function));
     }
 
     public void returnFromFunction(Result returnVal) {

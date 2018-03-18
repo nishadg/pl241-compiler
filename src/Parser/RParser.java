@@ -285,16 +285,17 @@ public class RParser {
             case 2:
                 return parseOutputNewLine();
         }
+        List<Result> params = new ArrayList<>();
         if (sym == Token.openparenToken) {
             do {
                 nextSym();
                 if (sym != Token.closeparenToken) {
-                    parseExpression();
+                    params.add(parseExpression());
                 }
             } while (sym == Token.commaToken);
             parseToken(")");
         }
-        return converter.callFunction(ScopeManager.INSTANCE.findTokenInScope(functionName));
+        return converter.callFunction(ScopeManager.INSTANCE.findTokenInScope(functionName), params);
     }
 
     private Result parseOutputNewLine() {

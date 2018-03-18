@@ -149,6 +149,7 @@ public class Instruction extends Result {
             case beq:
             case writeNL:
             case end:
+            case call:
                 // do nothing
                 break;
             default:
