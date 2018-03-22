@@ -35,6 +35,11 @@ public class BasicBlock extends Result {
     public boolean isIfParent, otherSubtreeParsed;
     public HashSet<Integer> otherSubtreeLiveValues;
 
+    // DLX fields
+    public int programCounter;
+    public int branchPCAddress;
+    public List<BasicBlock> pendingBranchUpdates = new ArrayList<>();
+
     private BasicBlock() {
         super(Kind.ADDR);
         blockIndex = counter++;
@@ -186,5 +191,9 @@ public class BasicBlock extends Result {
             else
                 rightBlock.inheritAndSearchAgain(this, join);
         }
+    }
+
+    public boolean areBranchUpdatesPending() {
+        return !pendingBranchUpdates.isEmpty();
     }
 }

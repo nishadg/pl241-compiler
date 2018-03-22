@@ -23,7 +23,7 @@ public class Allocator {
         //color all phi clusters with the same color
         for (Map.Entry<Integer, Set<Integer>> phiCluster : phiClusters.entrySet()) {
             // skip if already colored
-            if (instructionColors.containsKey(phiCluster.getKey())) {
+            if (!instructionColors.containsKey(phiCluster.getKey())) {
 
                 // mark color as used if neighbours are already colored
                 for (int phiValue : phiCluster.getValue()) {
