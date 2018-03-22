@@ -1,5 +1,6 @@
 package test;
 
+import Machine.DLX;
 import Parser.RFileReader;
 import Parser.RParser;
 import Parser.RScanner;
@@ -14,8 +15,8 @@ public class ParserTest {
     public static void main(String args[]) {
 //        readFile();
 //        scanFile();
-        parseAllFiles();
-//        parseFile("test024.txt");
+//        parseAllFiles();
+        parseFile("test001.txt");
     }
 
     private static void parseFile(String fileName) {
@@ -23,6 +24,8 @@ public class ParserTest {
         try {
             p = new RParser(PATH.concat(fileName));
             p.compile();
+            System.out.println("Executing...");
+            DLX.execute();
         } catch (IOException e) {
             e.printStackTrace();
         }

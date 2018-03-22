@@ -25,6 +25,11 @@ public class Instruction extends Result {
     }
 
     private static int counter = 0;
+
+    public Operation getOp() {
+        return op;
+    }
+
     Operation op;
 
     Result x;

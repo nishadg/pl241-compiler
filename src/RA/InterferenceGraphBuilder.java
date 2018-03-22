@@ -18,12 +18,13 @@ public class InterferenceGraphBuilder {
     }
 
 
-    public void buildInterferenceGraph(List<List<BasicBlock>> CFG) {
+    public HashMap<Integer, Integer> buildInterferenceGraph(List<List<BasicBlock>> CFG) {
         for (List<BasicBlock> functionBlockList : CFG) {
             addToGraph(functionBlockList.get(functionBlockList.size() - 1), new HashSet<>());
         }
         instructionColors = new Allocator(interferenceGraph, phiCluster).colorGraph();
         createDotFile();
+        return instructionColors;
     }
 
     private void createDotFile() {
@@ -176,7 +177,7 @@ public class InterferenceGraphBuilder {
         }
     }
 
-    public void allocate() {
-        buildInterferenceGraph(CFG.INSTANCE.getGraphs());
+    public HashMap<Integer, Integer> allocate() {
+        return buildInterferenceGraph(CFG.INSTANCE.getGraphs());
     }
 }

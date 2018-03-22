@@ -17,7 +17,7 @@ public class RFileReader {  // encapsulates streams of characters
     } // return current and advance to the next character on the input
 
     private void Error() throws IOException {
-        System.out.println("Reached EOF");
+//        System.out.println("Reached EOF");
         in.close();
     } // signal an error with current file position
 

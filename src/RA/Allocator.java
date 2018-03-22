@@ -71,8 +71,6 @@ public class Allocator {
             }
             Arrays.fill(colorUsed, false);
         }
-
-        System.out.println(instructionColors);
         return instructionColors;
     }
 }

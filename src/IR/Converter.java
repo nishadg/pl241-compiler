@@ -19,12 +19,6 @@ public class Converter {
             Map.entry(Token.divToken, Operation.div),
             Map.entry(Token.timesToken, Operation.mul)
     );
-    private Map<Integer, Operation> tokenOpImmMap = Map.ofEntries(
-            Map.entry(Token.plusToken, Operation.addi),
-            Map.entry(Token.minusToken, Operation.subi),
-            Map.entry(Token.divToken, Operation.divi),
-            Map.entry(Token.timesToken, Operation.muli)
-    );
     public static Instruction initLocation;
 
     public Result compute(int op, Result x, Result y) {
@@ -64,7 +58,7 @@ public class Converter {
             if (((Constant) x).getValue() == 0) {
                 return CFG.INSTANCE.getFirstInstruction();
             } else {
-                Instruction i = new Instruction(Operation.addi, r, x);
+                Instruction i = new Instruction(Operation.add, r, x);
                 return currentBlock.addInstruction(i);
             }
         } else {

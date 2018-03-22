@@ -4,11 +4,14 @@ import IR.CFG;
 import IR.Converter;
 import IR.SSAManager;
 import IR.ScopeManager;
+import Machine.DLX;
+import Machine.MachineCodeGenerator;
 import Model.*;
 import RA.InterferenceGraphBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static Parser.Token.*;
@@ -30,13 +33,15 @@ public class RParser {
 
     public void compile(){
         parse();
-        interferenceGraphBuilder.allocate();
-        //TODO: convert to machine code
+        HashMap<Integer, Integer> instructionRegisters = interferenceGraphBuilder.allocate();
+        int[] program = new MachineCodeGenerator(instructionRegisters).generate(CFG.INSTANCE.getGraphs());
+        DLX.load(program);
         CFG.INSTANCE.createDotFile();
         converter.finish();
     }
 
     public void parse() {
+        System.out.println("Parsing...");
         sym = rScanner.getSym();
         parseToken("main");
         converter.init();
@@ -47,7 +52,6 @@ public class RParser {
         parseToken("}");
         parseToken(".");
         converter.end();
-        System.out.println("Parsed successfully!");
     }
 
     private void checkIdent() {
