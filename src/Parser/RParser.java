@@ -166,7 +166,6 @@ public class RParser {
             parent = converter.createChildOfCurrentBlock();
         }
         BasicBlock leftBlock = converter.createLeftBlockFor(parent, false);
-        BasicBlock rightBlock = converter.createRightBlockFor(parent);
         BasicBlock joinBlock = converter.createWhileJoinBlock();
         converter.setCurrentBlock(joinBlock);
         ssaManager.pushToPhiStack();
@@ -193,7 +192,8 @@ public class RParser {
         // check CSE with new phi values.
         joinBlock.recheckAnchors();
 
-        // fix branch addresses
+        // create right and fix branch addresses
+        BasicBlock rightBlock = converter.createRightBlockFor(parent);
         leftBlock.getLastInstruction().setX(joinBlock);
         joinBlock.getLastInstruction().setY(rightBlock);
 

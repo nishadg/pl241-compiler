@@ -6,6 +6,8 @@ import IR.ScopeManager;
 
 import java.util.*;
 
+import static Model.Operation.load;
+
 public class BasicBlock extends Result {
     private static int counter = 0;
 
@@ -112,7 +114,7 @@ public class BasicBlock extends Result {
         Operation anchorOp = i.op;
         if (!Operation.nonAnchored.contains(i.op)) {
             if (i.op == Operation.store || i.op == Operation.phi || i.op == Operation.call) {  // killing inanchors
-                anchorOp = Operation.load;
+                anchorOp = load;
             }
             if (!anchor.containsKey(anchorOp)) anchor.put(anchorOp, new ArrayList<>());
             anchor.get(anchorOp).add(i);
@@ -129,8 +131,8 @@ public class BasicBlock extends Result {
     private void searchInAnchor(Instruction i) {
         int index = -1;
         if (anchor.containsKey(i.op)) {
-            if (i.op == Operation.load) { // need to break if same operand is stored
-                List<Instruction> instructions = anchor.get(Operation.load);
+            if (i.op == load) { // need to break if same operand is stored
+                List<Instruction> instructions = anchor.get(load);
                 for (int anchorIndex = instructions.size() - 1; anchorIndex >= 0; anchorIndex--) {
                     Instruction anchoredInstruction = instructions.get(anchorIndex);
                     if (anchoredInstruction.op == Operation.call && i.containsGlobals()) {
@@ -174,7 +176,7 @@ public class BasicBlock extends Result {
     private void inheritAndSearchAgain(BasicBlock parent, BasicBlock join) {
         inheritAnchor(parent);
         for (Instruction i : instructionList) {
-            searchInAnchor(i);
+                searchInAnchor(i);
         }
         if (leftBlock == join) return;
         if (leftBlock != null) {

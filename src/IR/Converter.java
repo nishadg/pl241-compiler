@@ -228,7 +228,7 @@ public class Converter {
 
 
     public BasicBlock createChildOfCurrentBlock() {
-        BasicBlock child = createLeftBlockFor(currentBlock, false);
+        BasicBlock child = createLeftBlockFor(currentBlock, true);
         setCurrentBlock(child);
         return child;
     }
