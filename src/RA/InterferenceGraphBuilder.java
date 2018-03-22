@@ -50,7 +50,7 @@ public class InterferenceGraphBuilder {
         for (int i = instructionList.size() - 1; i >= 0; i--) {
             Instruction currentInstruction = instructionList.get(i);
 
-            if(currentInstruction.number == 0) continue;
+            if (currentInstruction.number == 0) continue;
             if (currentInstruction.isDeleted()) continue;
 
             if (currentInstruction.isPhiInstruction) {
@@ -112,12 +112,17 @@ public class InterferenceGraphBuilder {
 
     private void addToCluster(Result currentInstruction, Set<Integer> cluster) {
         int valueNumber = getValueNumber(currentInstruction);
+        int id;
+        if (currentInstruction.kind == Kind.ADDR)
+            id = ((Instruction) currentInstruction).phiVar.getId();
+        else
+            id = ((Variable) currentInstruction).getId();
         if (valueNumber != 0) {
-            if (phiCluster.containsKey(valueNumber)) {
-                cluster.addAll(phiCluster.get(valueNumber));
+            if (phiCluster.containsKey(id)) {
+                cluster.addAll(phiCluster.get(id));
             }
             cluster.add(valueNumber);
-            phiCluster.put(valueNumber, cluster);
+            phiCluster.put(id, cluster);
         }
     }
 
@@ -143,7 +148,7 @@ public class InterferenceGraphBuilder {
         }
 
         for (int i : liveValues) {
-            if (i != n && !inSamePhiCluster(i, n)) {
+            if (i != n) {
                 if (interferenceGraph.containsKey(i)) {
                     interferenceGraph.get(i).add(n);
                 }
@@ -155,15 +160,6 @@ public class InterferenceGraphBuilder {
 
         liveValues.add(n);
 
-    }
-
-    private boolean inSamePhiCluster(int i, int n) {
-        if (phiCluster.containsKey(i)) {
-            return phiCluster.get(i).contains(n);
-        } else if (phiCluster.containsKey(n)) {
-            return phiCluster.get(n).contains(i);
-        }
-        return false;
     }
 
     private int getValueNumber(Result x) {

@@ -54,7 +54,7 @@ public class Instruction extends Result {
 
     public int number;
     public boolean isPhiInstruction;
-    Variable phiVar;
+    public Variable phiVar;
     BasicBlock containingBlock;
 
     public void setPhiInstruction(Variable phiVar) {

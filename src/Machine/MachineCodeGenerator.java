@@ -49,6 +49,7 @@ public class MachineCodeGenerator {
                     for (BasicBlock b : block.pendingBranchUpdates) {
                         addCForCode(programCounter, b);
                     }
+                    block.pendingBranchUpdates.clear();
                 }
                 for (Instruction instruction : block.getInstructionList()) {
                     if (!instruction.isDeleted() && instruction.getOp() != init)
@@ -59,7 +60,7 @@ public class MachineCodeGenerator {
         int[] programArray = new int[program.size()];
         for (int i = 0; i < program.size(); i++) {
             programArray[i] = program.get(i);
-            System.out.print(DLX.disassemble(programArray[i]));
+            System.out.print((i+1) + " " + DLX.disassemble(programArray[i]));
         }
         return programArray;
     }
