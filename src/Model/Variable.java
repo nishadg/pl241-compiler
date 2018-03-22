@@ -104,4 +104,8 @@ public class Variable extends Result {
 
         this.parameters = params;
     }
+
+    public boolean isArray() {
+        return !indices.isEmpty();
+    }
 }

@@ -140,11 +140,16 @@ public class BasicBlock extends Result {
                     } else if (anchoredInstruction.op == Operation.store && anchoredInstruction.y.equals(i.x)) {
                         i.propagateCopy(anchoredInstruction.x);
                         break;
-                    } else if (anchoredInstruction.op == Operation.phi && i.x.kind == Kind.VAR &&
-                            ((anchoredInstruction.number == ((Variable) i.x).getValueLocation().number) ||
-                                    anchoredInstruction.number == ((Variable) i.x).assignmentLocation.number)) {
-                        i.propagateCopy(anchoredInstruction);
-                        break;
+                    } else if (anchoredInstruction.op == Operation.phi && i.x.kind == Kind.VAR) {
+                        Variable x = (Variable) i.x;
+                        if ((anchoredInstruction.number == ((Variable) i.x).getValueLocation().number) ||
+                                anchoredInstruction.number == ((Variable) i.x).assignmentLocation.number) {
+                            i.propagateCopy(anchoredInstruction);
+                            break;
+                        }else if(!x.isArray() && x.getId() == anchoredInstruction.phiVar.getId()){
+                            i.propagateCopy(anchoredInstruction);
+                            break;
+                        }
                     } else if (i.x.equals(anchoredInstruction.x)) {
                         index = anchorIndex;
                         break;
@@ -176,15 +181,20 @@ public class BasicBlock extends Result {
     private void inheritAndSearchAgain(BasicBlock parent, BasicBlock join) {
         inheritAnchor(parent);
         for (Instruction i : instructionList) {
-                searchInAnchor(i);
+            searchInAnchor(i);
         }
         if (leftBlock == join) return;
         if (leftBlock != null) {
-            if (leftBlock.isWhileJoin)
+            if (leftBlock.isWhileJoin) {
+                leftBlock.inheritAnchor(this);
+                for (Instruction i : leftBlock.instructionList) {
+                    leftBlock.searchInAnchor(i);
+                }
                 leftBlock.recheckAnchors();
-            else if (leftBlock.isIfJoin)
+                leftBlock.rightBlock.inheritAndSearchAgain(leftBlock, join);
+            }else if (leftBlock.isIfJoin) {
                 leftBlock.inheritAndSearchAgain(leftBlock.ifParentBlock, join);
-            else
+            }else
                 leftBlock.inheritAndSearchAgain(this, join);
         }
         if (rightBlock != null) {
