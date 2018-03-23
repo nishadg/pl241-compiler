@@ -2,6 +2,7 @@ package IR;
 
 import Model.*;
 import Model.Register;
+import Parser.RScanner;
 import Parser.Token;
 
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import static Model.Kind.*;
 
 public class Converter {
 
+    private final RScanner scanner;
     private BasicBlock currentBlock;
     private Map<Integer, Operation> tokenOpMap = Map.ofEntries(
             Map.entry(Token.plusToken, Operation.add),
@@ -20,6 +22,10 @@ public class Converter {
             Map.entry(Token.timesToken, Operation.mul)
     );
     public static Instruction initLocation;
+
+    public Converter(RScanner rScanner) {
+        this.scanner = rScanner;
+    }
 
     public Result compute(int op, Result x, Result y) {
         if (x.kind == Kind.CONST && y.kind == Kind.CONST) {
@@ -105,6 +111,13 @@ public class Converter {
     }
 
     public Condition compare(int op, Result x, Result y) {
+        if(x.kind == CONST){
+            if(y.kind == CONST){
+                System.out.println("WARNING: Comparing constants [line "
+                        + scanner.getLineNum() + "]");
+            }
+            x = load(x);
+        }
         Instruction a = currentBlock.addInstruction(new Instruction(Operation.cmp, x, y));
         return new Condition(op, a);
     }

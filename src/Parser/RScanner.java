@@ -32,7 +32,7 @@ public class RScanner { // encapsulates streams of tokens
             2, "OutputNewLine"
     ));
 
-    int getLineNum() {
+    public int getLineNum() {
         return lineNum;
     }
 

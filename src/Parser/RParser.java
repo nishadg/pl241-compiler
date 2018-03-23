@@ -25,7 +25,7 @@ public class RParser {
 
     public RParser(String fileName) throws IOException {
         rScanner = new RScanner(fileName);
-        converter = new Converter();
+        converter = new Converter(rScanner);
         ssaManager = new SSAManager();
         CFG.INSTANCE.setName(fileName);
         interferenceGraphBuilder = new InterferenceGraphBuilder(fileName);
