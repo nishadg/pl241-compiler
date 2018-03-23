@@ -88,11 +88,13 @@ public class Converter {
 //            Value a = currentBlock.addInstruction(i);
 //            return currentBlock.addInstruction(new Instruction(Operation.move, a, x));
 //        } else {
+
+        boolean maintainValue = (y.kind == VAR);
         if (x.kind == VAR) x = loadArray((Variable) x);
         if (y.kind == VAR || y.kind == CONST) y = load(y);
         Instruction moveInstruction = new Instruction(Operation.move, y, x);
         Instruction storedAtLocation = currentBlock.addInstruction(moveInstruction);
-        moveInstruction.propagateCopy(y);
+        if (!maintainValue) moveInstruction.propagateCopy(y);
         if (x.kind == VAR) ((Variable) x).setValueLocation(storedAtLocation.getValueLocation());
         return currentBlock.addInstruction(new Instruction(Operation.store, storedAtLocation, x));
 //        }
@@ -111,8 +113,8 @@ public class Converter {
     }
 
     public Condition compare(int op, Result x, Result y) {
-        if(x.kind == CONST){
-            if(y.kind == CONST){
+        if (x.kind == CONST) {
+            if (y.kind == CONST) {
                 System.out.println("WARNING: Comparing constants [line "
                         + scanner.getLineNum() + "]");
             }

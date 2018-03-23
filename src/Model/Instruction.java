@@ -7,6 +7,10 @@ public class Instruction extends Result {
         return isDeleted && deletedBecause != DCE ? replacementInstruction.getValueLocation() : this;
     }
 
+    public void unDelete() {
+        isDeleted = false;
+    }
+
     public enum DeleteReason {
         CSE, CP, DCE
     }

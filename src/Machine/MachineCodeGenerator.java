@@ -127,7 +127,11 @@ public class MachineCodeGenerator {
             case end:
                 addOperation(opCodes.get(op), 0, 0, 0);
                 break;
-
+            case move:
+                Ra = getRegister(instruction);
+                Rb = getRegister(instruction.getX());
+                addOperation(DLX.ADDI, Ra, Rb, 0);
+                break;
         }
 
     }
